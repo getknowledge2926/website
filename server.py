@@ -24,6 +24,7 @@ import base64
 import smtplib
 import datetime
 import threading
+import urllib.request
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import socket
@@ -366,8 +367,84 @@ Learn More. Achieve More.
 {OFFICIAL_EMAIL} | {OFFICIAL_PHONE}
 """
 
+    # 1. Rich HTML Template
+    html_content = f"""
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: #ffffff;">
+        <div style="background: #0c2340; color: #ffffff; padding: 26px 20px; text-align: center;">
+            <h2 style="margin: 0; font-size: 22px; font-weight: 800; letter-spacing: 0.5px;">Get Knowledge</h2>
+            <p style="margin: 6px 0 0 0; color: #38bdf8; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;">LEARN MORE. ACHIEVE MORE.</p>
+        </div>
+        <div style="padding: 24px; color: #334155; line-height: 1.6;">
+            <p style="font-size: 16px; color: #0f172a; margin-top: 0;">Dear <strong>{name}</strong>,</p>
+            <p style="font-size: 15px; color: #0f172a;"><strong>Greetings from Get Knowledge!</strong></p>
+            <p>Thank you for applying for our <strong>20-Day Live Cohort in {course}</strong>. Your registration reference is <strong>{applicant_id}</strong> and has been recorded in our official admissions file.</p>
+            
+            <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 16px; margin: 20px 0;">
+                <h4 style="margin: 0 0 12px 0; color: #0c2340; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em;">Application Summary</h4>
+                <table style="width: 100%; font-size: 13.5px; border-collapse: collapse;">
+                    <tr><td style="padding: 5px 0; color: #64748b;">Applicant ID:</td><td style="font-weight: 700; color: #0c2340;">{applicant_id}</td></tr>
+                    <tr><td style="padding: 5px 0; color: #64748b;">Course:</td><td style="font-weight: 600;">{course} (20 Days Live)</td></tr>
+                    <tr><td style="padding: 5px 0; color: #64748b;">Course Fee:</td><td style="font-weight: 700; color: #0284c7;">₹199 (All-Inclusive)</td></tr>
+                    <tr><td style="padding: 5px 0; color: #64748b;">WhatsApp Number:</td><td style="font-weight: 600;">{whatsapp}</td></tr>
+                    <tr><td style="padding: 5px 0; color: #64748b;">UPI Ref / UTR:</td><td style="font-weight: 700; color: #0f172a; background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">{utr}</td></tr>
+                </table>
+            </div>
+
+            <div style="background: #f0fdf4; border-left: 4px solid #10b981; padding: 14px 18px; border-radius: 6px; margin-bottom: 22px;">
+                <strong style="color: #065f46; display: block; font-size: 14px; margin-bottom: 4px;">&#10003; What Happens Next?</strong>
+                <p style="margin: 0; font-size: 13.5px; color: #166534; line-height: 1.5;">
+                    Our accounts desk will manually verify your UPI reference ({utr}) against our bank statement.<br><br>
+                    <strong>Once manual verification is done, our team will contact you directly on WhatsApp (+91 {whatsapp}) and you will be added to the batch WhatsApp group</strong> with your private Google Meet class links and onboarding kit!
+                </p>
+            </div>
+
+            <p style="font-size: 13px; color: #64748b; margin-top: 24px; line-height: 1.5;">
+                Have questions? Contact Admissions directly:<br>
+                • Email: <a href="mailto:{OFFICIAL_EMAIL}" style="color: #0284c7; text-decoration: none;">{OFFICIAL_EMAIL}</a><br>
+                • Phone / WhatsApp: <a href="https://wa.me/919626261123" style="color: #0284c7; text-decoration: none;">{OFFICIAL_PHONE}</a>
+            </p>
+        </div>
+        <div style="background: #f8fafc; padding: 14px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0;">
+            &copy; 2026 Get Knowledge &bull; Bengaluru, India
+        </div>
+    </div>
+    """
+
+    # 2. Check for HTTPS Email Webhook URL (Bypasses Render's port 587 block!)
+    webhook_url = os.environ.get("EMAIL_WEBHOOK_URL", "").strip()
+    if not webhook_url and os.path.exists(".env"):
+        try:
+            with open(".env", "r") as f:
+                for line in f:
+                    if line.strip().startswith("EMAIL_WEBHOOK_URL="):
+                        webhook_url = line.split("=", 1)[1].strip().strip('"').strip("'")
+        except Exception:
+            pass
+
+    if webhook_url:
+        try:
+            payload = json.dumps({
+                "to": to_email,
+                "subject": subject,
+                "body": body_text,
+                "html": html_content
+            }).encode("utf-8")
+            req = urllib.request.Request(
+                webhook_url,
+                data=payload,
+                headers={"Content-Type": "application/json"}
+            )
+            with urllib.request.urlopen(req, timeout=12) as resp:
+                res_body = resp.read().decode("utf-8")
+                print(f"[+] Sent confirmation email to {to_email} via HTTPS Webhook: {res_body}")
+                return True, "Email sent via Webhook"
+        except Exception as e:
+            print(f"[!] Webhook email dispatch error ({e}). Trying SMTP fallback...")
+
+    # 3. Fallback: Direct Gmail SMTP
     smtp_pass = get_smtp_password()
     if smtp_pass:
+        smtp_clean = smtp_pass.replace(" ", "")
         try:
             msg = MIMEMultipart("alternative")
             msg["From"] = f"Get Knowledge Admissions <{OFFICIAL_EMAIL}>"
@@ -375,56 +452,13 @@ Learn More. Achieve More.
             msg["Subject"] = subject
             msg["Reply-To"] = OFFICIAL_EMAIL
 
-            # Attach plain-text
+            # Attach plain-text and HTML
             msg.attach(MIMEText(body_text, "plain"))
-
-            # Attach rich HTML template
-            html_content = f"""
-            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: #ffffff;">
-                <div style="background: #0c2340; color: #ffffff; padding: 26px 20px; text-align: center;">
-                    <h2 style="margin: 0; font-size: 22px; font-weight: 800; letter-spacing: 0.5px;">Get Knowledge</h2>
-                    <p style="margin: 6px 0 0 0; color: #38bdf8; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;">LEARN MORE. ACHIEVE MORE.</p>
-                </div>
-                <div style="padding: 24px; color: #334155; line-height: 1.6;">
-                    <p style="font-size: 16px; color: #0f172a; margin-top: 0;">Dear <strong>{name}</strong>,</p>
-                    <p style="font-size: 15px; color: #0f172a;"><strong>Greetings from Get Knowledge!</strong></p>
-                    <p>Thank you for applying for our <strong>20-Day Live Cohort in {course}</strong>. Your registration reference is <strong>{applicant_id}</strong> and has been recorded in our official admissions file.</p>
-                    
-                    <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 16px; margin: 20px 0;">
-                        <h4 style="margin: 0 0 12px 0; color: #0c2340; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em;">Application Summary</h4>
-                        <table style="width: 100%; font-size: 13.5px; border-collapse: collapse;">
-                            <tr><td style="padding: 5px 0; color: #64748b;">Applicant ID:</td><td style="font-weight: 700; color: #0c2340;">{applicant_id}</td></tr>
-                            <tr><td style="padding: 5px 0; color: #64748b;">Course:</td><td style="font-weight: 600;">{course} (20 Days Live)</td></tr>
-                            <tr><td style="padding: 5px 0; color: #64748b;">Course Fee:</td><td style="font-weight: 700; color: #0284c7;">₹199 (All-Inclusive)</td></tr>
-                            <tr><td style="padding: 5px 0; color: #64748b;">WhatsApp Number:</td><td style="font-weight: 600;">{whatsapp}</td></tr>
-                            <tr><td style="padding: 5px 0; color: #64748b;">UPI Ref / UTR:</td><td style="font-weight: 700; color: #0f172a; background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">{utr}</td></tr>
-                        </table>
-                    </div>
-
-                    <div style="background: #f0fdf4; border-left: 4px solid #10b981; padding: 14px 18px; border-radius: 6px; margin-bottom: 22px;">
-                        <strong style="color: #065f46; display: block; font-size: 14px; margin-bottom: 4px;">&#10003; What Happens Next?</strong>
-                        <p style="margin: 0; font-size: 13.5px; color: #166534; line-height: 1.5;">
-                            Our accounts desk will manually verify your UPI reference ({utr}) against our bank statement.<br><br>
-                            <strong>Once manual verification is done, our team will contact you directly on WhatsApp (+91 {whatsapp}) and you will be added to the batch WhatsApp group</strong> with your private Google Meet class links and onboarding kit!
-                        </p>
-                    </div>
-
-                    <p style="font-size: 13px; color: #64748b; margin-top: 24px; line-height: 1.5;">
-                        Have questions? Contact Admissions directly:<br>
-                        • Email: <a href="mailto:{OFFICIAL_EMAIL}" style="color: #0284c7; text-decoration: none;">{OFFICIAL_EMAIL}</a><br>
-                        • Phone / WhatsApp: <a href="https://wa.me/919626261123" style="color: #0284c7; text-decoration: none;">{OFFICIAL_PHONE}</a>
-                    </p>
-                </div>
-                <div style="background: #f8fafc; padding: 14px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0;">
-                    &copy; 2026 Get Knowledge &bull; Bengaluru, India
-                </div>
-            </div>
-            """
             msg.attach(MIMEText(html_content, "html"))
 
             with smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=8) as server:
                 server.starttls()
-                server.login(OFFICIAL_EMAIL, smtp_pass)
+                server.login(OFFICIAL_EMAIL, smtp_clean)
                 server.send_message(msg)
             print(f"[+] Sent confirmation email to {to_email} via SMTP")
             return True, "Email sent successfully"
@@ -432,8 +466,8 @@ Learn More. Achieve More.
             print(f"[!] SMTP sending failed ({e}). Email logged to server console.")
             return False, str(e)
     else:
-        print(f"[*] (SMTP password not set in environment or .env) Confirmation email drafted for {to_email}:\n{'-'*60}\n{body_text}\n{'-'*60}")
-        return False, "SMTP password not set"
+        print(f"[*] (No SMTP password or Webhook set) Confirmation email drafted for {to_email}:\n{'-'*60}\n{body_text}\n{'-'*60}")
+        return False, "Neither EMAIL_WEBHOOK_URL nor SMTP_PASSWORD set"
 
 class GetKnowledgeRequestHandler(SimpleHTTPRequestHandler):
     """Custom request handler that serves files and handles /api endpoints."""
