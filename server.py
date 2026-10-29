@@ -24,6 +24,7 @@ import base64
 import hashlib
 import smtplib
 import datetime
+import time
 import threading
 import urllib.request
 from email.mime.text import MIMEText
@@ -877,8 +878,40 @@ class DualStackThreadingServer(ThreadingHTTPServer):
         return super().server_bind()
 
 
+def keep_alive_worker():
+    """Background thread that automatically pings the live Render server every 10 minutes to prevent sleep."""
+    # Allow 25 seconds for server startup and DNS/network routing
+    time.sleep(25)
+
+    # Target URL: Render environment variable or live production URL
+    target_domain = os.environ.get("RENDER_EXTERNAL_URL", "").strip()
+    if not target_domain or "localhost" in target_domain:
+        target_domain = "https://getknowledge.onrender.com"
+
+    ping_url = target_domain.rstrip("/") + "/api/health"
+    print(f"[*] Self-keepalive worker started targeting: {ping_url}")
+
+    while True:
+        try:
+            req = urllib.request.Request(
+                ping_url,
+                headers={"User-Agent": "GetKnowledge-SelfPing/1.0"}
+            )
+            with urllib.request.urlopen(req, timeout=12) as resp:
+                print(f"[keepalive] Pinged {ping_url} -> Status {resp.status}")
+        except Exception as e:
+            print(f"[keepalive] Ping note: {e}")
+
+        # Sleep for 10 minutes (600 seconds) - well within Render's 15-minute idle limit
+        time.sleep(600)
+
+
 def main():
     ensure_xlsx_exists()
+
+    # Automatically start the keep-alive background worker on Render
+    threading.Thread(target=keep_alive_worker, daemon=True).start()
+
     server_address = ("::", PORT)
     try:
         httpd = DualStackThreadingServer(server_address, GetKnowledgeRequestHandler)
