@@ -21,6 +21,7 @@ import os
 import sys
 import json
 import base64
+import hashlib
 import smtplib
 import datetime
 import threading
@@ -65,6 +66,27 @@ def get_smtp_password():
         except Exception:
             pass
     return ""
+
+def get_admin_password():
+    """Retrieve ADMIN_PASSWORD from environment or .env, defaulting to '09876543211'."""
+    pwd = os.environ.get("ADMIN_PASSWORD", "").strip()
+    if pwd:
+        return pwd
+    if os.path.exists(".env"):
+        try:
+            with open(".env", "r") as f:
+                for line in f:
+                    line = line.strip()
+                    if line.startswith("ADMIN_PASSWORD="):
+                        return line.split("=", 1)[1].strip().strip('"').strip("'")
+        except Exception:
+            pass
+    return "09876543211"
+
+def get_admin_token():
+    """Deterministic secure session token derived from current ADMIN_PASSWORD."""
+    pw = get_admin_password()
+    return hashlib.sha256(f"gk_portal_salt_2026_{pw}".encode("utf-8")).hexdigest()
 
 def ensure_xlsx_exists():
     """Ensure applications.xlsx exists with styled headers."""
@@ -487,15 +509,48 @@ class GetKnowledgeRequestHandler(SimpleHTTPRequestHandler):
         except (BrokenPipeError, ConnectionResetError):
             pass
 
+    def check_admin_auth(self):
+        """Verify request contains valid X-Admin-Token header or ?token= query parameter."""
+        expected = get_admin_token()
+        token = self.headers.get("X-Admin-Token", "").strip()
+        if not token and "?" in self.path:
+            query_str = self.path.split("?", 1)[1]
+            for part in query_str.split("&"):
+                if part.startswith("token="):
+                    token = part.split("=", 1)[1].strip()
+                    break
+        return token == expected
+
     def do_OPTIONS(self):
         """Handle CORS pre-flight requests."""
         self.send_response(200)
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-Admin-Token")
         self.end_headers()
 
     def do_POST(self):
+        if self.path == "/api/admin-auth":
+            content_length = int(self.headers.get("Content-Length", 0))
+            post_body = self.rfile.read(content_length).decode("utf-8")
+            try:
+                data = json.loads(post_body)
+            except Exception:
+                data = {}
+            entered_pw = str(data.get("password", "")).strip()
+            if entered_pw == get_admin_password():
+                self.send_json_response(200, {
+                    "status": "success",
+                    "token": get_admin_token(),
+                    "message": "Access granted"
+                })
+            else:
+                self.send_json_response(401, {
+                    "status": "error",
+                    "message": "Incorrect password. Access denied."
+                })
+            return
+
         if self.path == "/api/apply":
             content_length = int(self.headers.get("Content-Length", 0))
             post_body = self.rfile.read(content_length).decode("utf-8")
@@ -564,6 +619,9 @@ class GetKnowledgeRequestHandler(SimpleHTTPRequestHandler):
             return
 
         if self.path == "/api/update-row":
+            if not self.check_admin_auth():
+                self.send_json_response(401, {"status": "unauthorized", "message": "Admin authorization required."})
+                return
             content_length = int(self.headers.get("Content-Length", 0))
             post_body = self.rfile.read(content_length).decode("utf-8")
             try:
@@ -583,6 +641,9 @@ class GetKnowledgeRequestHandler(SimpleHTTPRequestHandler):
             return
 
         if self.path == "/api/delete-row":
+            if not self.check_admin_auth():
+                self.send_json_response(401, {"status": "unauthorized", "message": "Admin authorization required."})
+                return
             content_length = int(self.headers.get("Content-Length", 0))
             post_body = self.rfile.read(content_length).decode("utf-8")
             try:
@@ -602,6 +663,9 @@ class GetKnowledgeRequestHandler(SimpleHTTPRequestHandler):
             return
 
         if self.path == "/api/add-row":
+            if not self.check_admin_auth():
+                self.send_json_response(401, {"status": "unauthorized", "message": "Admin authorization required."})
+                return
             content_length = int(self.headers.get("Content-Length", 0))
             post_body = self.rfile.read(content_length).decode("utf-8")
             try:
@@ -626,6 +690,9 @@ class GetKnowledgeRequestHandler(SimpleHTTPRequestHandler):
             return
 
         if self.path == "/api/upload-screenshot":
+            if not self.check_admin_auth():
+                self.send_json_response(401, {"status": "unauthorized", "message": "Admin authorization required."})
+                return
             content_length = int(self.headers.get("Content-Length", 0))
             post_body = self.rfile.read(content_length).decode("utf-8")
             try:
@@ -659,7 +726,14 @@ class GetKnowledgeRequestHandler(SimpleHTTPRequestHandler):
         self.send_json_response(404, {"status": "error", "message": "Not Found"})
 
     def do_GET(self):
-        if self.path == "/api/download-xlsx":
+        if self.path.startswith("/api/download-xlsx"):
+            if not self.check_admin_auth():
+                self.send_response(401)
+                self.send_header("Content-Type", "text/plain")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(b"Unauthorized: Admin password required.")
+                return
             if not os.path.exists(XLSX_FILENAME):
                 ensure_xlsx_exists()
             try:
@@ -677,6 +751,9 @@ class GetKnowledgeRequestHandler(SimpleHTTPRequestHandler):
                 return
 
         if self.path == "/api/applications":
+            if not self.check_admin_auth():
+                self.send_json_response(401, {"status": "unauthorized", "message": "Admin authorization required."})
+                return
             ensure_xlsx_exists()
             try:
                 wb = openpyxl.load_workbook(XLSX_FILENAME, data_only=True)
