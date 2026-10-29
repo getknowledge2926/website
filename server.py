@@ -723,11 +723,38 @@ class GetKnowledgeRequestHandler(SimpleHTTPRequestHandler):
             smtp_pass = os.environ.get("SMTP_PASSWORD", "").strip()
             brevo_key = os.environ.get("BREVO_API_KEY", "").strip()
             resend_key = os.environ.get("RESEND_API_KEY", "").strip()
+
+            webhook_diag = {}
+            if webhook:
+                try:
+                    test_payload = json.dumps({
+                        "to": "getknowledge2026@gmail.com",
+                        "subject": "Diagnostic Ping",
+                        "body": "Webhook diagnostic ping test",
+                        "html": "<p>Webhook diagnostic ping test</p>"
+                    }).encode("utf-8")
+                    req = urllib.request.Request(
+                        webhook,
+                        data=test_payload,
+                        headers={
+                            "Content-Type": "application/json",
+                            "Accept": "application/json, text/plain, */*",
+                            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                        }
+                    )
+                    with urllib.request.urlopen(req, timeout=10) as r:
+                        webhook_diag = {"status_code": r.status, "response": r.read().decode("utf-8", errors="ignore")[:300]}
+                except urllib.error.HTTPError as he:
+                    webhook_diag = {"error_type": "HTTPError", "code": he.code, "reason": str(he.reason), "body": he.read().decode("utf-8", errors="ignore")[:300]}
+                except Exception as e:
+                    webhook_diag = {"error_type": type(e).__name__, "error": str(e)}
+
             masked_webhook = (webhook[:30] + "..." + webhook[-10:]) if len(webhook) > 40 else webhook
             status_obj = {
                 "has_webhook": bool(webhook),
                 "webhook_length": len(webhook),
                 "webhook_preview": masked_webhook,
+                "webhook_diag": webhook_diag,
                 "is_script_google_exec": webhook.startswith("https://script.google.com/macros/s/") and webhook.endswith("/exec"),
                 "has_smtp": bool(smtp_pass),
                 "has_brevo": bool(brevo_key),
