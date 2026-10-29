@@ -933,23 +933,26 @@ async function submitApplicationRecord(data) {
     console.warn('Could not save to localStorage:', e);
   }
 
-  // 1. Submit to Python Backend Server /api/apply (tries relative endpoint and localhost:8000)
+  // 1. Submit to Python Backend Server /api/apply
   const candidateEndpoints = ['/api/apply'];
-  if (!window.location.origin.includes(':8000')) {
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') {
     candidateEndpoints.push('http://localhost:8000/api/apply');
-    candidateEndpoints.push('http://127.0.0.1:8000/api/apply');
   }
 
   let backendRes = null;
   for (const ep of candidateEndpoints) {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
       const response = await fetch(ep, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         backendRes = await response.json();
@@ -962,7 +965,7 @@ async function submitApplicationRecord(data) {
         };
       }
     } catch (err) {
-      // Try next endpoint in candidate list
+      console.warn('Endpoint ' + ep + ' error:', err);
     }
   }
 

@@ -1,0 +1,12 @@
+# Environment Variables & Secrets
+.env
+email_config.json
+
+# Python Cache
+__pycache__/
+*.pyc
+
+# OS Files
+.DS_Store
+Thumbs.db
+*.zip

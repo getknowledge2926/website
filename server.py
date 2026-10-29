@@ -23,6 +23,7 @@ import json
 import base64
 import smtplib
 import datetime
+import threading
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import socket
@@ -421,7 +422,7 @@ Learn More. Achieve More.
             """
             msg.attach(MIMEText(html_content, "html"))
 
-            with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            with smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=8) as server:
                 server.starttls()
                 server.login(OFFICIAL_EMAIL, smtp_pass)
                 server.send_message(msg)
@@ -513,16 +514,18 @@ class GetKnowledgeRequestHandler(SimpleHTTPRequestHandler):
                 })
                 return
 
-            # 3. Send automatic confirmation email
-            email_sent, email_msg = send_confirmation_email(data)
+            # 3. Send automatic confirmation email in background thread so client response is instant!
+            try:
+                email_thread = threading.Thread(target=send_confirmation_email, args=(dict(data),), daemon=True)
+                email_thread.start()
+            except Exception as e:
+                print(f"[!] Email thread start failed: {e}")
 
-            # 4. Return success response
+            # 4. Return success response immediately
             self.send_json_response(200, {
                 "status": "success",
                 "message": "Application recorded successfully in applications.xlsx!",
-                "applicantId": data.get("applicantId"),
-                "emailSent": email_sent,
-                "emailMessage": email_msg
+                "applicantId": data.get("applicantId")
             })
             return
 
