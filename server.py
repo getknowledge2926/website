@@ -432,73 +432,14 @@ Learn More. Achieve More.
             req = urllib.request.Request(
                 webhook_url,
                 data=payload,
-                headers={
-                    "Content-Type": "application/json",
-                    "Accept": "application/json, text/plain, */*",
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-                }
+                headers={"Content-Type": "application/json"}
             )
-            with urllib.request.urlopen(req, timeout=15) as resp:
+            with urllib.request.urlopen(req, timeout=12) as resp:
                 res_body = resp.read().decode("utf-8")
                 print(f"[+] Sent confirmation email to {to_email} via HTTPS Webhook: {res_body}")
-                return True, f"Email sent via Webhook: {res_body[:100]}"
+                return True, "Email sent via Webhook"
         except Exception as e:
-            print(f"[!] Webhook email dispatch error ({e}). Trying fallbacks...")
-
-    # 3. Brevo API (Free: 300 emails/day, Port 443)
-    brevo_key = os.environ.get("BREVO_API_KEY", "").strip()
-    if brevo_key:
-        try:
-            payload = json.dumps({
-                "sender": {"name": "Get Knowledge Admissions", "email": OFFICIAL_EMAIL},
-                "to": [{"email": to_email, "name": name}],
-                "subject": subject,
-                "htmlContent": html_content,
-                "textContent": body_text
-            }).encode("utf-8")
-            req = urllib.request.Request(
-                "https://api.brevo.com/v3/smtp/email",
-                data=payload,
-                headers={
-                    "api-key": brevo_key,
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-                }
-            )
-            with urllib.request.urlopen(req, timeout=12) as resp:
-                res_body = resp.read().decode("utf-8")
-                print(f"[+] Sent confirmation email to {to_email} via Brevo API: {res_body}")
-                return True, "Email sent via Brevo API"
-        except Exception as e:
-            print(f"[!] Brevo API dispatch error ({e})")
-
-    # 4. Resend API (Free: 100 emails/day, Port 443)
-    resend_key = os.environ.get("RESEND_API_KEY", "").strip()
-    if resend_key:
-        try:
-            payload = json.dumps({
-                "from": "Get Knowledge Admissions <onboarding@resend.dev>",
-                "to": [to_email],
-                "subject": subject,
-                "html": html_content,
-                "text": body_text
-            }).encode("utf-8")
-            req = urllib.request.Request(
-                "https://api.resend.com/emails",
-                data=payload,
-                headers={
-                    "Authorization": f"Bearer {resend_key}",
-                    "Content-Type": "application/json",
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-                }
-            )
-            with urllib.request.urlopen(req, timeout=12) as resp:
-                res_body = resp.read().decode("utf-8")
-                print(f"[+] Sent confirmation email to {to_email} via Resend API: {res_body}")
-                return True, "Email sent via Resend API"
-        except Exception as e:
-            print(f"[!] Resend API dispatch error ({e})")
+            print(f"[!] Webhook email dispatch error ({e}). Trying SMTP fallback...")
 
     # 3. Fallback: Direct Gmail SMTP
     smtp_pass = get_smtp_password()
@@ -718,88 +659,6 @@ class GetKnowledgeRequestHandler(SimpleHTTPRequestHandler):
         self.send_json_response(404, {"status": "error", "message": "Not Found"})
 
     def do_GET(self):
-        if self.path == "/api/email-status":
-            webhook = os.environ.get("EMAIL_WEBHOOK_URL", "").strip()
-            smtp_pass = os.environ.get("SMTP_PASSWORD", "").strip()
-            brevo_key = os.environ.get("BREVO_API_KEY", "").strip()
-            resend_key = os.environ.get("RESEND_API_KEY", "").strip()
-
-            webhook_diag = {}
-            if webhook:
-                try:
-                    test_payload = json.dumps({
-                        "to": "getknowledge2026@gmail.com",
-                        "subject": "Diagnostic Ping",
-                        "body": "Webhook diagnostic ping test",
-                        "html": "<p>Webhook diagnostic ping test</p>"
-                    }).encode("utf-8")
-                    req = urllib.request.Request(
-                        webhook,
-                        data=test_payload,
-                        headers={
-                            "Content-Type": "application/json",
-                            "Accept": "application/json, text/plain, */*",
-                            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-                        }
-                    )
-                    with urllib.request.urlopen(req, timeout=10) as r:
-                        webhook_diag = {"status_code": r.status, "response": r.read().decode("utf-8", errors="ignore")[:300]}
-                except urllib.error.HTTPError as he:
-                    webhook_diag = {"error_type": "HTTPError", "code": he.code, "reason": str(he.reason), "body": he.read().decode("utf-8", errors="ignore")[:300]}
-                except Exception as e:
-                    webhook_diag = {"error_type": type(e).__name__, "error": str(e)}
-
-            masked_webhook = (webhook[:30] + "..." + webhook[-10:]) if len(webhook) > 40 else webhook
-            status_obj = {
-                "has_webhook": bool(webhook),
-                "webhook_length": len(webhook),
-                "webhook_preview": masked_webhook,
-                "webhook_diag": webhook_diag,
-                "is_script_google_exec": webhook.startswith("https://script.google.com/macros/s/") and webhook.endswith("/exec"),
-                "has_smtp": bool(smtp_pass),
-                "has_brevo": bool(brevo_key),
-                "has_resend": bool(resend_key),
-                "server_time": datetime.datetime.now().isoformat()
-            }
-            body = json.dumps(status_obj, indent=2).encode("utf-8")
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", str(len(body)))
-            self.send_header("Access-Control-Allow-Origin", "*")
-            self.end_headers()
-            self.wfile.write(body)
-            return
-
-        if self.path.startswith("/api/test-email"):
-            test_target = "getknowledge2026@gmail.com"
-            if "?" in self.path:
-                query_str = self.path.split("?", 1)[1]
-                for part in query_str.split("&"):
-                    if part.startswith("to="):
-                        test_target = part.split("=", 1)[1]
-            test_data = {
-                "applicantId": "TEST-VERIFY",
-                "name": "Admissions Test",
-                "email": test_target,
-                "course": "AI Development",
-                "whatsapp": "9626261123",
-                "utr": "TEST12345678"
-            }
-            success, msg = send_confirmation_email(test_data)
-            resp_data = {
-                "success": success,
-                "message": msg,
-                "target_email": test_target
-            }
-            body = json.dumps(resp_data, indent=2).encode("utf-8")
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", str(len(body)))
-            self.send_header("Access-Control-Allow-Origin", "*")
-            self.end_headers()
-            self.wfile.write(body)
-            return
-
         if self.path == "/api/download-xlsx":
             if not os.path.exists(XLSX_FILENAME):
                 ensure_xlsx_exists()
