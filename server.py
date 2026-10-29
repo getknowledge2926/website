@@ -726,6 +726,15 @@ class GetKnowledgeRequestHandler(SimpleHTTPRequestHandler):
         self.send_json_response(404, {"status": "error", "message": "Not Found"})
 
     def do_GET(self):
+        if self.path in ["/api/health", "/health", "/ping"]:
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", "16")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(b'{"status":"ok"}\n')
+            return
+
         if self.path.startswith("/api/download-xlsx"):
             if not self.check_admin_auth():
                 self.send_response(401)
