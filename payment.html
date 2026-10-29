@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Instructions &amp; Verification | Get Knowledge</title>
+  <meta name="description"
+    content="Official payment instructions for Get Knowledge. Pay course fee of ₹199 securely via UPI QR code or bank transfer with manual verification.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <link rel="icon" type="image/png" href="assets/images/GetKnowledge Learning Logo.png">
+</head>
+
+<body>
+
+  <!-- Announcement Bar -->
+  <aside class="announcement-bar" role="complementary">
+    <span>🔒 Secure Manual Verification &bull; Fee: ₹199 for 20 Days &bull; Never share your UPI PIN or OTP</span>
+  </aside>
+
+  <!-- Top Center Brand Header -->
+  <header class="top-center-brand-header">
+    <div class="container">
+      <a href="index.html" class="top-center-brand-wrap" aria-label="Get Knowledge Home">
+        <img src="assets/images/GetKnowledge Learning Logo.png" alt="Get Knowledge Logo" class="top-center-logo-img">
+        <div class="top-center-brand-name">
+          Get <span class="brand-accent-word">Knowledge</span>
+        </div>
+        <div class="top-center-tagline">Learn More. Achieve More.</div>
+      </a>
+    </div>
+  </header>
+
+  <!-- Sticky Centered Navigation Bar -->
+  <nav class="navbar" id="mainNavbar" aria-label="Main Navigation">
+    <div class="container">
+      <div class="nav-links">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="course-details.html" class="nav-link">Course</a>
+        <a href="about.html" class="nav-link">About Us</a>
+        <a href="contact.html" class="nav-link">Contact Us</a>
+      </div>
+
+      <div class="nav-right-cta">
+        <button type="button" class="nav-toggle-btn" id="mobileNavToggle" aria-label="Open Mobile Menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Mobile Drawer Menu -->
+  <div class="mobile-nav-backdrop" id="mobileNavBackdrop"></div>
+  <div class="mobile-nav-drawer" id="mobileNavDrawer" role="dialog" aria-modal="true" aria-label="Mobile Navigation">
+    <div class="mobile-nav-header">
+      <div style="display: flex; align-items: center; gap: 0.6rem;">
+        <img src="assets/images/GetKnowledge Learning Logo.png" alt="Get Knowledge"
+          style="height: 42px; border-radius: 8px;">
+        <span style="font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 800; color: #0c2340;">Get
+          Knowledge</span>
+      </div>
+      <button type="button" class="mobile-close-btn" id="mobileNavClose" aria-label="Close Mobile Menu">&times;</button>
+    </div>
+    <nav class="mobile-links">
+      <a href="index.html">Home</a>
+      <a href="course-details.html">Course</a>
+      <a href="about.html">About Us</a>
+      <a href="contact.html">Contact Us</a>
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="refund-policy.html">Refund Policy</a>
+    </nav>
+    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 0.75rem;">
+      <a href="#apply-modal" class="btn btn-primary open-apply-modal" style="width: 100%;">Apply Now (₹199)</a>
+      <a href="#" class="whatsapp-link btn btn-whatsapp btn-sm" style="width: 100%;">WhatsApp Admissions</a>
+    </div>
+  </div>
+
+  <main>
+    <!-- Page Header Hero -->
+    <section class="section section-dark" style="padding: 4.5rem 0 3.5rem 0;">
+      <div class="container container-narrow" style="text-align: center;">
+        <span class="section-tag tag-primary">Official Payment Portal</span>
+        <h1 class="section-title" style="color: var(--white); font-size: 2.75rem;">
+          Course Fee Payment (₹199)
+        </h1>
+        <p class="section-subtitle" style="color: #cbd5e1; font-size: 1.15rem;">
+          Pay the one-time fee of ₹199 for the 20-day AI Development live cohort via Official UPI QR code or Direct Bank
+          Transfer. Every payment is manually verified.
+        </p>
+      </div>
+    </section>
+
+    <!-- Main Payment Grid Section -->
+    <section class="section">
+      <div class="container">
+
+        <!-- Critical Security Notice Alert -->
+        <div class="alert-box alert-warning">
+          <div class="alert-icon">⚠️</div>
+          <div>
+            <strong>Important Security &amp; Anti-Fraud Advisory:</strong><br>
+            • Always verify the recipient name (<strong>Get Knowledge</strong>) on your UPI application before approving
+            payment.<br>
+            • <strong>We will NEVER ask you for your UPI PIN, ATM PIN, OTP, banking password, or card CVV.</strong>
+            Receiving a course seat never requires entering your PIN.<br>
+            • Enrollment is confirmed <strong>only after our team manually verifies</strong> your transaction reference
+            (UTR) in our bank records.
+          </div>
+        </div>
+
+        <div class="payment-grid">
+
+          <!-- Column 1: Step-by-Step Instructions & Course Selector -->
+          <div>
+            <div class="payment-card">
+              <h2 class="payment-card-title">1. Selected Course</h2>
+              <p class="payment-card-sub">Review your selected course and the exact payable fee in Indian Rupees (₹).
+              </p>
+
+              <div class="course-selector-box">
+                <label for="paymentCourseSelect">Available Course</label>
+                <select id="paymentCourseSelect" class="course-select-dropdown" aria-label="Select course for payment">
+                  <!-- Populated dynamically by js/payment.js -->
+                </select>
+
+                <div class="fee-display-strip">
+                  <span class="label">Payable Amount:</span>
+                  <span class="amount" id="paymentCourseFee">₹199</span>
+                </div>
+              </div>
+
+              <!-- Step-by-step instructions -->
+              <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--slate-900); margin: 1.75rem 0 1rem 0;">
+                2. Step-by-Step Payment Instructions
+              </h3>
+
+              <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+                <div style="display: flex; align-items: flex-start; gap: 0.85rem;">
+                  <span class="step-num-pill"
+                    style="margin-bottom: 0; width: 32px; height: 32px; font-size: 0.875rem;">1</span>
+                  <div style="font-size: 0.9rem; color: var(--slate-700);">
+                    <strong style="color: var(--slate-900); display: block;">Verify Amount (₹199)</strong>
+                    Confirm the payable fee is exactly ₹199 for the 20-day AI Development live program.
+                  </div>
+                </div>
+
+                <div style="display: flex; align-items: flex-start; gap: 0.85rem;">
+                  <span class="step-num-pill"
+                    style="margin-bottom: 0; width: 32px; height: 32px; font-size: 0.875rem;">2</span>
+                  <div style="font-size: 0.9rem; color: var(--slate-700);">
+                    <strong style="color: var(--slate-900); display: block;">Scan UPI QR or Initiate Bank
+                      Transfer</strong>
+                    Use Google Pay, PhonePe, Paytm, BHIM, or your mobile banking app to pay ₹199. Verify the recipient
+                    name matches <strong>Get Knowledge</strong>.
+                  </div>
+                </div>
+
+                <div style="display: flex; align-items: flex-start; gap: 0.85rem;">
+                  <span class="step-num-pill"
+                    style="margin-bottom: 0; width: 32px; height: 32px; font-size: 0.875rem;">3</span>
+                  <div style="font-size: 0.9rem; color: var(--slate-700);">
+                    <strong style="color: var(--slate-900); display: block;">Save the 12-Digit UTR &amp;
+                      Screenshot</strong>
+                    Take a clear screenshot of the payment confirmation screen and copy the 12-digit UTR / UPI
+                    Transaction ID.
+                  </div>
+                </div>
+
+                <div style="display: flex; align-items: flex-start; gap: 0.85rem;">
+                  <span class="step-num-pill"
+                    style="margin-bottom: 0; width: 32px; height: 32px; font-size: 0.875rem;">4</span>
+                  <div style="font-size: 0.9rem; color: var(--slate-700);">
+                    <strong style="color: var(--slate-900); display: block;">Submit Payment Reference Google
+                      Form</strong>
+                    Click the "Submit Payment Proof" button below to record your UTR, selected course, and contact
+                    information.
+                  </div>
+                </div>
+
+                <div style="display: flex; align-items: flex-start; gap: 0.85rem;">
+                  <span class="step-num-pill"
+                    style="margin-bottom: 0; width: 32px; height: 32px; font-size: 0.875rem; background: var(--accent-emerald);">&#10003;</span>
+                  <div style="font-size: 0.9rem; color: var(--slate-700);">
+                    <strong style="color: var(--slate-900); display: block;">Manual Verification &amp; Batch
+                      Onboarding</strong>
+                    Our team manually verifies your payment against our bank records in 12-24 hours. We then reach out
+                    directly via WhatsApp and Email with your Google Meet link.
+                  </div>
+                </div>
+              </div>
+
+              <!-- Button to Submit Proof -->
+              <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--slate-200);">
+                <a href="#" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-lg"
+                  id="submitPaymentProofBtn" style="width: 100%;">
+                  Submit Payment Reference (Google Form) &rarr;
+                </a>
+                <span
+                  style="font-size: 0.75rem; color: var(--slate-500); display: block; text-align: center; margin-top: 0.5rem;">
+                  Opens official Google Form to submit your 12-digit UTR reference
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Column 2: Payment Details (UPI QR + Bank Transfer) -->
+          <div>
+
+            <!-- Option A: UPI Payment -->
+            <div class="payment-card" style="margin-bottom: 2rem;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--slate-900);">Option A: Pay via Official
+                  UPI QR</h3>
+                <span class="badge badge-emerald">Fastest &bull; ₹199</span>
+              </div>
+
+              <!-- QR Code Card -->
+              <div class="qr-preview-wrapper">
+                <img src="assets/images/getknowledge-upi-qr.png" alt="Official UPI QR Code" class="qr-image-display"
+                  id="paymentQrImage">
+                <div style="font-size: 0.8125rem; color: var(--slate-600); margin-bottom: 0.75rem;">
+                  Scan using GPay, PhonePe, Paytm, BHIM, or any banking app
+                </div>
+
+                <!-- Copyable UPI ID Box -->
+                <div class="upi-id-copy-box">
+                  <div>
+                    <span
+                      style="font-size: 0.7rem; color: var(--slate-500); display: block; text-transform: uppercase;">Official
+                      UPI ID:</span>
+                    <span id="displayUpiId">9384955009@airtel</span>
+                  </div>
+                  <button type="button" class="copy-btn" id="copyUpiIdBtn" title="Copy UPI ID">
+                    Copy UPI ID
+                  </button>
+                </div>
+
+                <div style="font-size: 0.8125rem; color: var(--slate-600); margin-top: 0.6rem;">
+                  Verified Recipient Name: <strong id="displayUpiPayee" style="color: var(--slate-900);">Get
+                    Knowledge</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Option B: Direct Bank Transfer (NEFT / IMPS / RTGS) -->
+            <div class="payment-card">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--slate-900);">Option B: Direct Bank
+                  Transfer</h3>
+                <span class="badge badge-primary">NEFT / IMPS / RTGS</span>
+              </div>
+              <p style="font-size: 0.875rem; color: var(--slate-600); margin-bottom: 1rem;">
+                For direct net banking or mobile banking transfers, use our official bank details below:
+              </p>
+
+              <div class="bank-details-card">
+                <table class="bank-table">
+                  <tbody>
+                    <tr>
+                      <td class="label-col">Account Holder</td>
+                      <td class="val-col" id="bankAccountHolder">Get Knowledge</td>
+                    </tr>
+                    <tr>
+                      <td class="label-col">Bank Name</td>
+                      <td class="val-col" id="bankName">HDFC Bank Ltd</td>
+                    </tr>
+                    <tr>
+                      <td class="label-col">Account Number</td>
+                      <td class="val-col">
+                        <span id="bankAccountNumber">50200089123456</span>
+                        <button type="button" class="copy-btn" id="copyAccountNumberBtn"
+                          style="padding: 0.2rem 0.6rem;">Copy</button>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="label-col">Account Type</td>
+                      <td class="val-col" id="bankAccountType">Current Account</td>
+                    </tr>
+                    <tr>
+                      <td class="label-col">IFSC Code</td>
+                      <td class="val-col">
+                        <span id="bankIfsc">HDFC0001234</span>
+                        <button type="button" class="copy-btn" id="copyIfscBtn"
+                          style="padding: 0.2rem 0.6rem;">Copy</button>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="label-col">Branch</td>
+                      <td class="val-col" id="bankBranch">Bengaluru</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Important Reminder -->
+              <div class="alert-box alert-info" style="margin-top: 1.5rem; margin-bottom: 0;">
+                <div class="alert-icon">ℹ️</div>
+                <div>
+                  <strong>Important:</strong> After completing your transfer of ₹199, copy the <strong>UTR / Transaction
+                    Reference Number</strong> and click the green button above to submit your payment proof.
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Verification FAQ / What happens next -->
+        <div style="margin-top: 4rem;">
+          <div class="section-header">
+            <span class="section-tag tag-primary">Post-Payment Guide</span>
+            <h2 class="section-title">What Happens After You Pay?</h2>
+            <p class="section-subtitle">
+              We operate with 100% manual verification for complete transparency. Here is what to expect next.
+            </p>
+          </div>
+
+          <div class="benefits-grid">
+            <div class="benefit-card">
+              <div class="benefit-icon-box emerald">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+              </div>
+              <h3 class="benefit-title">Manual Verification Window</h3>
+              <p class="benefit-desc">
+                Our accounts team checks our official bank statement against the 12-digit UTR you submitted. This
+                process takes <strong>12 to 24 hours</strong>.
+              </p>
+            </div>
+
+            <div class="benefit-card">
+              <div class="benefit-icon-box">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                  <polyline points="22,6 12,13 2,6"></polyline>
+                </svg>
+              </div>
+              <h3 class="benefit-title">Confirmation by Email &amp; WhatsApp</h3>
+              <p class="benefit-desc">
+                As soon as your payment of ₹199 is verified, we send an official receipt and onboarding kit directly to
+                your registered email and WhatsApp number.
+              </p>
+            </div>
+
+            <div class="benefit-card">
+              <div class="benefit-icon-box amber">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                  <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                </svg>
+              </div>
+              <h3 class="benefit-title">Google Meet Link &amp; Batch Access</h3>
+              <p class="benefit-desc">
+                Your private Google Meet class links and 20-day batch WhatsApp group invitation will be shared manually
+                before class begins.
+              </p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- Global Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div style="display: flex; align-items: center; gap: 0.65rem; margin-bottom: 1rem;">
+            <img src="assets/images/GetKnowledge Learning Logo.png" alt="Get Knowledge"
+              style="height: 48px; border-radius: 8px; background: #fff;">
+            <div>
+              <div style="font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 800; color: #ffffff;">
+                Get Knowledge</div>
+              <div style="font-size: 0.7rem; color: #38bdf8; letter-spacing: 0.15em; font-weight: 700;">LEARN MORE.
+                ACHIEVE MORE.</div>
+            </div>
+          </div>
+          <p style="font-size: 0.875rem; color: #94a3b8; line-height: 1.6; margin-bottom: 1.25rem;">
+            Get Knowledge provides live, interactive cohort-based online training. We empower learners with practical
+            technical skills through hands-on guidance.
+          </p>
+          <div style="border-left: 2px solid #38bdf8; padding-left: 0.75rem; font-size: 0.8125rem; color: #94a3b8;">
+            Direct official UPI QR or Bank Transfer with instant verification.
+          </div>
+        </div>
+
+        <div>
+          <h4 class="footer-col-title">Navigation</h4>
+          <ul class="footer-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="course-details.html">Course</a></li>
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="contact.html">Contact Us</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="footer-col-title">Legal &amp; Policies</h4>
+          <ul class="footer-links">
+            <li><a href="privacy.html">Privacy Policy</a></li>
+            <li><a href="terms.html">Terms &amp; Conditions</a></li>
+            <li><a href="refund-policy.html">Refund Policy</a></li>
+            <li><a href="cancellation-policy.html">Cancellation Policy</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="footer-col-title">Get in Touch</h4>
+          <p style="font-size: 0.875rem; color: #cbd5e1; margin-bottom: 0.5rem;">
+            <strong>Email:</strong> <a href="mailto:getknowledge2026@gmail.com" class="email-link"
+              style="color: #818cf8;">getknowledge2026@gmail.com</a>
+          </p>
+          <p style="font-size: 0.875rem; color: #cbd5e1; margin-bottom: 0.5rem;">
+            <strong>WhatsApp:</strong> +91 96262 61123
+          </p>
+          <p style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 1.25rem;">
+            Support Hours: Mon – Sat (9:30 AM – 7:30 PM IST)
+          </p>
+          <a href="#" class="whatsapp-link btn btn-whatsapp btn-sm" style="width: 100%;">
+            Open WhatsApp Support
+          </a>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>
+          &copy; <span id="currentYear">2026</span> Get Knowledge. All rights reserved.
+        </div>
+        <div>
+          Live online education &bull; All sessions hosted on Google Meet
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/config.js"></script>
+  <script src="js/main.js?v=20261028f"></script>
+  <script src="js/payment.js?v=20261028"></script>
+  <script>
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
+  </script>
+</body>
+
+</html>

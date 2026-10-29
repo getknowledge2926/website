@@ -1,0 +1,1937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GetKnowledge | Excel Application Manager (applications.xlsx)</title>
+  <meta name="description" content="View, search, edit, and view payment screenshots directly from applications.xlsx.">
+  <link rel="icon" type="image/png" href="assets/images/GetKnowledge Learning Logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-dark: #090D16;
+      --bg-card: #111827;
+      --bg-card-hover: #172236;
+      --bg-input: #0D1524;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-focus: rgba(99, 102, 241, 0.5);
+      --text-main: #F3F4F6;
+      --text-muted: #94A3B8;
+      --primary: #6366F1;
+      --primary-hover: #4F46E5;
+      --primary-light: rgba(99, 102, 241, 0.15);
+      --success: #10B981;
+      --success-light: rgba(16, 185, 129, 0.15);
+      --warning: #F59E0B;
+      --warning-light: rgba(245, 158, 11, 0.15);
+      --danger: #EF4444;
+      --danger-light: rgba(239, 68, 68, 0.15);
+      --cyan: #06B6D4;
+      --font-main: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+
+    /* Ambient glow */
+    body::before {
+      content: "";
+      position: fixed;
+      top: -150px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.18) 0%, rgba(6, 182, 212, 0.08) 40%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Top Navigation Bar */
+    .top-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(11, 16, 27, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+    }
+
+    .nav-container {
+      max-width: 1440px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text-main);
+    }
+
+    .brand-logo {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+
+    .brand-info h1 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .file-badge {
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      background: rgba(16, 185, 129, 0.15);
+      color: #34D399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 2px 8px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .pulse-dot {
+      width: 6px;
+      height: 6px;
+      background: #34D399;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #34D399;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    .brand-info p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-family: var(--font-main);
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #6366F1, #4F46E5);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #4F46E5, #4338CA);
+      box-shadow: 0 6px 18px rgba(99, 102, 241, 0.45);
+      transform: translateY(-1px);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #10B981, #059669);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-success:hover {
+      background: linear-gradient(135deg, #059669, #047857);
+      box-shadow: 0 6px 18px rgba(16, 185, 129, 0.45);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+      border-color: var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.15);
+      color: #F87171;
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.25);
+    }
+
+    .btn-sm {
+      padding: 5px 10px;
+      font-size: 0.78rem;
+      border-radius: 6px;
+    }
+
+    .btn-icon-only {
+      padding: 6px 8px;
+    }
+
+    /* Main Container */
+    .main-wrap {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 24px;
+      width: 100%;
+      position: relative;
+      z-index: 1;
+      flex: 1;
+    }
+
+    /* Metrics Bar */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .metric-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 20px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .metric-card:hover {
+      border-color: rgba(99, 102, 241, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .metric-card::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+    }
+
+    .metric-card.total::after { background: linear-gradient(90deg, #6366F1, #06B6D4); }
+    .metric-card.verified::after { background: linear-gradient(90deg, #10B981, #34D399); }
+    .metric-card.pending::after { background: linear-gradient(90deg, #F59E0B, #FBBF24); }
+    .metric-card.revenue::after { background: linear-gradient(90deg, #EC4899, #8B5CF6); }
+
+    .metric-title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .metric-val {
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: var(--text-main);
+      font-family: var(--font-mono);
+      line-height: 1.1;
+    }
+
+    .metric-sub {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* Filter Toolbar */
+    .toolbar {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .search-box {
+      position: relative;
+      flex: 1;
+      min-width: 260px;
+      max-width: 480px;
+    }
+
+    .search-box svg {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .search-input {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px 10px 40px;
+      color: var(--text-main);
+      font-family: var(--font-main);
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .custom-select {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-family: var(--font-main);
+      font-size: 0.85rem;
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    .custom-select:focus {
+      border-color: var(--primary);
+    }
+
+    .result-count {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* Excel Table Container */
+    .table-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      max-height: 720px;
+      position: relative;
+    }
+
+    /* Custom scrollbar */
+    .table-responsive::-webkit-scrollbar {
+      height: 8px;
+      width: 8px;
+    }
+    .table-responsive::-webkit-scrollbar-track {
+      background: #0B101B;
+    }
+    .table-responsive::-webkit-scrollbar-thumb {
+      background: #1F293D;
+      border-radius: 4px;
+    }
+    .table-responsive::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    thead {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: #0E1626;
+      border-bottom: 2px solid var(--border);
+    }
+
+    th {
+      padding: 14px 16px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+      user-select: none;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background-color 0.15s ease;
+    }
+
+    tbody tr:hover {
+      background-color: var(--bg-card-hover);
+    }
+
+    td {
+      padding: 12px 16px;
+      color: var(--text-main);
+      vertical-align: middle;
+    }
+
+    /* Row Details Styling */
+    .id-pill {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 0.8rem;
+      padding: 3px 8px;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: #A5B4FC;
+      border-radius: 6px;
+      display: inline-block;
+    }
+
+    .time-cell {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .name-cell {
+      font-weight: 700;
+      color: #FFFFFF;
+      font-size: 0.9rem;
+    }
+
+    .contact-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .wa-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: #34D399;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.8rem;
+      transition: color 0.15s;
+    }
+
+    .wa-link:hover {
+      color: #10B981;
+      text-decoration: underline;
+    }
+
+    .email-link {
+      color: var(--cyan);
+      text-decoration: none;
+      font-size: 0.8rem;
+    }
+
+    .email-link:hover {
+      text-decoration: underline;
+    }
+
+    .utr-cell {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      background: rgba(255, 255, 255, 0.04);
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 0.8rem;
+    }
+
+    .copy-btn {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      padding: 2px;
+      border-radius: 4px;
+      transition: color 0.15s;
+    }
+
+    .copy-btn:hover {
+      color: var(--text-main);
+    }
+
+    /* SCREENSHOT PREVIEW & CELL STYLING */
+    .screenshot-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .screenshot-preview-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      padding: 4px 10px 4px 6px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      color: #34D399;
+      font-weight: 600;
+      font-size: 0.78rem;
+      transition: all 0.2s ease;
+    }
+
+    .screenshot-preview-btn:hover {
+      background: rgba(16, 185, 129, 0.22);
+      border-color: rgba(16, 185, 129, 0.6);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+    }
+
+    .screenshot-thumb {
+      width: 28px;
+      height: 28px;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .view-proof-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .btn-replace-screenshot {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 6px 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .btn-replace-screenshot:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: var(--text-main);
+    }
+
+    .no-screenshot-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .no-proof-pill {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px dashed rgba(255, 255, 255, 0.15);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-family: var(--font-mono);
+    }
+
+    .btn-upload-proof {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.35);
+      color: #A5B4FC;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-upload-proof:hover {
+      background: rgba(99, 102, 241, 0.25);
+      border-color: rgba(99, 102, 241, 0.6);
+      color: #FFFFFF;
+    }
+
+    /* Verification Status Selector inside Table */
+    .status-select {
+      font-family: var(--font-main);
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .status-pending {
+      background: rgba(245, 158, 11, 0.15);
+      color: #FBBF24;
+      border-color: rgba(245, 158, 11, 0.3);
+    }
+
+    .status-verified {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34D399;
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .status-rejected {
+      background: rgba(239, 68, 68, 0.15);
+      color: #F87171;
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    /* Actions cell */
+    .actions-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state svg {
+      margin-bottom: 14px;
+      color: #475569;
+    }
+
+    .empty-state h3 {
+      font-size: 1.1rem;
+      color: var(--text-main);
+      margin-bottom: 6px;
+    }
+
+    /* Help & Guide Card at bottom */
+    .guide-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-top: 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .guide-col h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--cyan);
+    }
+
+    .guide-col p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      line-height: 1.6;
+    }
+
+    .code-box {
+      font-family: var(--font-mono);
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      color: #E2E8F0;
+      word-break: break-all;
+    }
+
+    /* Modals */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .modal-backdrop.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-content {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      position: relative;
+    }
+
+    .screenshot-modal-content {
+      max-width: 760px;
+      background: #0D1525;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7);
+    }
+
+    .modal-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: var(--bg-card);
+      z-index: 2;
+    }
+
+    .modal-header h2 {
+      font-size: 1.15rem;
+      font-weight: 800;
+    }
+
+    .close-modal-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1.5rem;
+      line-height: 1;
+      padding: 4px;
+      border-radius: 6px;
+    }
+
+    .close-modal-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .modal-body {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .screenshot-img-container {
+      width: 100%;
+      max-height: 65vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #080C14;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      padding: 12px;
+    }
+
+    .screenshot-full-img {
+      max-width: 100%;
+      max-height: 60vh;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .screenshot-meta-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 580px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .form-input {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text-main);
+      font-family: var(--font-main);
+      font-size: 0.88rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+
+    .modal-footer {
+      padding: 18px 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      background: rgba(11, 16, 27, 0.4);
+    }
+
+    /* Toast Notification */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 2000;
+    }
+
+    .toast {
+      background: #1E293B;
+      color: #FFFFFF;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      animation: slideInRight 0.25s ease forwards;
+    }
+
+    .toast.success {
+      border-left: 4px solid #10B981;
+    }
+
+    .toast.error {
+      border-left: 4px solid #EF4444;
+    }
+
+    @keyframes slideInRight {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header class="top-nav">
+    <div class="nav-container">
+      <a href="index.html" class="brand-section">
+        <img src="assets/images/GetKnowledge Learning Logo.png" alt="Get Knowledge Logo" class="brand-logo">
+        <div class="brand-info">
+          <h1>
+            GetKnowledge Portal
+            <span class="file-badge"><span class="pulse-dot"></span> applications.xlsx</span>
+          </h1>
+          <p>Live Spreadsheet Manager & Payment Screenshot Viewer</p>
+        </div>
+      </a>
+
+      <div class="nav-actions">
+        <button class="btn btn-secondary" onclick="fetchApplications()" title="Refresh spreadsheet data">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/></svg>
+          Refresh
+        </button>
+
+        <button class="btn btn-primary" onclick="openAddModal()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          Add Applicant
+        </button>
+
+        <a href="/api/download-xlsx" class="btn btn-success" download>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Download .XLSX
+        </a>
+
+        <a href="index.html" class="btn btn-secondary">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          Main Site
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Wrap -->
+  <main class="main-wrap">
+
+    <!-- KPI Metric Cards -->
+    <div class="metrics-grid">
+      <div class="metric-card total">
+        <div class="metric-title">Total Applications</div>
+        <div class="metric-val" id="metric-total">0</div>
+        <div class="metric-sub">Recorded in applications.xlsx</div>
+      </div>
+
+      <div class="metric-card verified">
+        <div class="metric-title">Verified Enrollments</div>
+        <div class="metric-val" id="metric-verified" style="color: #34D399;">0</div>
+        <div class="metric-sub">Added to WhatsApp Group</div>
+      </div>
+
+      <div class="metric-card pending">
+        <div class="metric-title">Pending Verification</div>
+        <div class="metric-val" id="metric-pending" style="color: #FBBF24;">0</div>
+        <div class="metric-sub">Awaiting manual check</div>
+      </div>
+
+      <div class="metric-card revenue">
+        <div class="metric-title">Total Fee Pipeline</div>
+        <div class="metric-val" id="metric-revenue" style="color: #A78BFA;">₹0</div>
+        <div class="metric-sub">₹199 per student</div>
+      </div>
+    </div>
+
+    <!-- Search & Filter Controls -->
+    <div class="toolbar">
+      <div class="search-box">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" id="searchInput" class="search-input" placeholder="Search by ID, Name, Phone, Email, UTR..." oninput="handleSearch()">
+      </div>
+
+      <div class="filter-group">
+        <select id="statusFilter" class="custom-select" onchange="handleFilter()">
+          <option value="ALL">All Verification Statuses</option>
+          <option value="Pending Manual Verification">Pending Manual Verification</option>
+          <option value="Verified & Added to WhatsApp">Verified & Added to WhatsApp</option>
+          <option value="Rejected / Invalid UTR">Rejected / Invalid UTR</option>
+        </select>
+
+        <div class="result-count" id="resultCount">Showing 0 applicants</div>
+      </div>
+    </div>
+
+    <!-- Excel Sheet Table View -->
+    <div class="table-card">
+      <div class="table-responsive">
+        <table id="applicationsTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Applicant ID</th>
+              <th>Timestamp</th>
+              <th>Full Name</th>
+              <th>Phone / WhatsApp</th>
+              <th>Email Address</th>
+              <th>Course & Fee</th>
+              <th>Batch Timing</th>
+              <th>UPI Reference / UTR</th>
+              <th>Payment Screenshot Proof</th>
+              <th>Verification Status (Live Edit)</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr>
+              <td colspan="12" class="empty-state">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                <h3>Loading applications from applications.xlsx...</h3>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Guide & Spreadsheet Sync Options -->
+    <div class="guide-card">
+      <div class="guide-col">
+        <h3>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+          Web Excel URL
+        </h3>
+        <p>This web dashboard is directly bound to your local Excel file. Any change made here immediately persists in <code>applications.xlsx</code>.</p>
+        <div class="code-box">http://localhost:8000/admin.html</div>
+      </div>
+
+      <div class="guide-col">
+        <h3>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Direct Download Link
+        </h3>
+        <p>Get the latest raw Excel spreadsheet file containing all registered rows and formatting at any time:</p>
+        <div class="code-box">http://localhost:8000/api/download-xlsx</div>
+      </div>
+
+      <div class="guide-col">
+        <h3>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+          Local Excel / Numbers
+        </h3>
+        <p>Open the file directly on your Mac using Microsoft Excel, Apple Numbers, or LibreOffice:</p>
+        <div class="code-box">applications.xlsx</div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- SCREENSHOT LIGHTBOX MODAL -->
+  <div class="modal-backdrop" id="screenshotModal">
+    <div class="modal-content screenshot-modal-content">
+      <div class="modal-header">
+        <div>
+          <h2 style="display: flex; align-items: center; gap: 8px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            Payment Screenshot Proof
+          </h2>
+          <div id="modal_ss_subtitle" style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;"></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <a id="modal_ss_open_tab" href="#" target="_blank" class="btn btn-secondary btn-sm" title="Open full image in new browser tab">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+            Open Tab
+          </a>
+          <a id="modal_ss_download" href="#" download class="btn btn-success btn-sm" title="Download image file to computer">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Download
+          </a>
+          <button class="close-modal-btn" onclick="closeScreenshotModal()">&times;</button>
+        </div>
+      </div>
+      <div class="modal-body" style="padding: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #080C14;">
+        <div class="screenshot-img-container">
+          <img id="modal_ss_img" src="" alt="Payment Screenshot Proof" class="screenshot-full-img">
+        </div>
+        <div class="screenshot-meta-bar" id="modal_ss_meta">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content: space-between; flex-wrap: wrap;">
+        <div style="font-size: 0.8rem; color: var(--text-muted);">
+          Saved in <code style="color: #34D399; font-family: var(--font-mono);">applications.xlsx</code> &bull; Verified by admissions team
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="closeScreenshotModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Applicant Modal -->
+  <div class="modal-backdrop" id="editModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Edit Application Record</h2>
+        <button class="close-modal-btn" onclick="closeEditModal()">&times;</button>
+      </div>
+      <form id="editForm" onsubmit="saveEdit(event)">
+        <div class="modal-body">
+          <input type="hidden" id="edit_applicantId">
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Applicant ID</label>
+              <input type="text" id="edit_display_id" class="form-input" disabled style="opacity: 0.6; cursor: not-allowed;">
+            </div>
+            <div class="form-group">
+              <label>Full Name *</label>
+              <input type="text" id="edit_name" class="form-input" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Phone Number *</label>
+              <input type="text" id="edit_phone" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label>WhatsApp Number *</label>
+              <input type="text" id="edit_whatsapp" class="form-input" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Email Address *</label>
+            <input type="email" id="edit_email" class="form-input" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Batch Timing</label>
+              <select id="edit_batch" class="form-input">
+                <option value="Daily Evening (7:30 PM - 9:00 PM IST)">Daily Evening (7:30 PM - 9:00 PM IST)</option>
+                <option value="Weekend Intensive (10:00 AM - 1:00 PM IST)">Weekend Intensive (10:00 AM - 1:00 PM IST)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Course Fee (INR)</label>
+              <input type="number" id="edit_fee" class="form-input" value="199">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>UPI Reference / UTR</label>
+              <input type="text" id="edit_utr" class="form-input">
+            </div>
+            <div class="form-group">
+              <label>Payment Status</label>
+              <select id="edit_paymentStatus" class="form-input">
+                <option value="Yes, Payment Done">Yes, Payment Done</option>
+                <option value="Pending">Pending</option>
+                <option value="Failed">Failed</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Verification Status</label>
+            <select id="edit_verificationStatus" class="form-input">
+              <option value="Pending Manual Verification">Pending Manual Verification</option>
+              <option value="Verified & Added to WhatsApp">Verified & Added to WhatsApp</option>
+              <option value="Rejected / Invalid UTR">Rejected / Invalid UTR</option>
+            </select>
+          </div>
+
+          <!-- Upload / Replace Screenshot in Edit Modal -->
+          <div class="form-group">
+            <label>Attach / Update Payment Screenshot Proof</label>
+            <input type="file" id="edit_screenshot_file" class="form-input" accept="image/*" onchange="previewEditScreenshot(this)">
+            <div id="edit_screenshot_preview_wrap" style="display: none; align-items: center; gap: 10px; margin-top: 8px;">
+              <img id="edit_screenshot_thumb" src="" alt="Proof Preview" style="width: 48px; height: 48px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border);">
+              <span id="edit_screenshot_name" style="font-size: 0.8rem; color: #34D399; font-family: var(--font-mono);"></span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save to Excel (.xlsx)</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add New Applicant Modal -->
+  <div class="modal-backdrop" id="addModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Add New Applicant to applications.xlsx</h2>
+        <button class="close-modal-btn" onclick="closeAddModal()">&times;</button>
+      </div>
+      <form id="addForm" onsubmit="saveNewApplicant(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Full Name *</label>
+            <input type="text" id="add_name" class="form-input" placeholder="e.g. Ramesh Kumar" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Phone Number *</label>
+              <input type="tel" id="add_phone" class="form-input" placeholder="10-digit mobile" required>
+            </div>
+            <div class="form-group">
+              <label>WhatsApp Number *</label>
+              <input type="tel" id="add_whatsapp" class="form-input" placeholder="10-digit mobile" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Email Address *</label>
+            <input type="email" id="add_email" class="form-input" placeholder="student@example.com" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Batch Timing</label>
+              <select id="add_batch" class="form-input">
+                <option value="Daily Evening (7:30 PM - 9:00 PM IST)">Daily Evening (7:30 PM - 9:00 PM IST)</option>
+                <option value="Weekend Intensive (10:00 AM - 1:00 PM IST)">Weekend Intensive (10:00 AM - 1:00 PM IST)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Course Fee</label>
+              <input type="number" id="add_fee" class="form-input" value="199">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>UPI Reference / UTR Number</label>
+              <input type="text" id="add_utr" class="form-input" placeholder="12-digit UTR">
+            </div>
+            <div class="form-group">
+              <label>Verification Status</label>
+              <select id="add_verificationStatus" class="form-input">
+                <option value="Pending Manual Verification">Pending Manual Verification</option>
+                <option value="Verified & Added to WhatsApp">Verified & Added to WhatsApp</option>
+                <option value="Rejected / Invalid UTR">Rejected / Invalid UTR</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Payment Screenshot Proof (Optional)</label>
+            <input type="file" id="add_screenshot" class="form-input" accept="image/*">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeAddModal()">Cancel</button>
+          <button type="submit" class="btn btn-success">Add to Spreadsheet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal-backdrop" id="deleteModal">
+    <div class="modal-content" style="max-width: 440px;">
+      <div class="modal-header">
+        <h2>Delete Applicant?</h2>
+        <button class="close-modal-btn" onclick="closeDeleteModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="color: var(--text-muted); font-size: 0.9rem;">
+          Are you sure you want to permanently delete applicant <strong id="delete_target_name" style="color: #FFFFFF;"></strong> (<span id="delete_target_id" class="id-pill"></span>) from <strong style="color: #34D399;">applications.xlsx</strong>?
+        </p>
+        <p style="font-size: 0.8rem; color: #F87171; margin-top: 8px;">
+          This will permanently remove the row from the Excel file.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+        <button type="button" class="btn btn-danger" onclick="confirmDelete()">Permanently Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+    let allApplications = [];
+    let deleteTargetId = null;
+    let editBase64Screenshot = null;
+    let editScreenshotName = null;
+
+    // Load Applications from server on page load
+    document.addEventListener("DOMContentLoaded", () => {
+      fetchApplications();
+
+      // Close modals on Escape key
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          closeScreenshotModal();
+          closeEditModal();
+          closeAddModal();
+          closeDeleteModal();
+        }
+      });
+    });
+
+    async function fetchApplications() {
+      try {
+        const response = await fetch('/api/applications');
+        if (!response.ok) throw new Error("Server returned " + response.status);
+        const data = await response.json();
+        allApplications = data.applications || [];
+        updateMetrics(allApplications);
+        renderTable(allApplications);
+      } catch (err) {
+        showToast("Error loading Excel applications: " + err.message, "error");
+        document.getElementById("tableBody").innerHTML = `
+          <tr>
+            <td colspan="12" class="empty-state">
+              <h3>Failed to load applications.xlsx</h3>
+              <p style="color: var(--text-muted);">${err.message}</p>
+              <button class="btn btn-primary" onclick="fetchApplications()" style="margin-top: 14px;">Try Again</button>
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    function updateMetrics(apps) {
+      const total = apps.length;
+      let verified = 0;
+      let pending = 0;
+      let revenue = 0;
+
+      apps.forEach(app => {
+        const status = (app["Verification Status"] || "").toLowerCase();
+        if (status.includes("verified")) {
+          verified++;
+        } else if (status.includes("pending")) {
+          pending++;
+        }
+        const fee = parseFloat(app["Fee (INR)"]) || 199;
+        revenue += fee;
+      });
+
+      document.getElementById("metric-total").textContent = total;
+      document.getElementById("metric-verified").textContent = verified;
+      document.getElementById("metric-pending").textContent = pending;
+      document.getElementById("metric-revenue").textContent = "₹" + revenue.toLocaleString("en-IN");
+    }
+
+    function renderTable(apps) {
+      const tbody = document.getElementById("tableBody");
+      const resultCount = document.getElementById("resultCount");
+      resultCount.textContent = `Showing ${apps.length} of ${allApplications.length} applicants`;
+
+      if (apps.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="12" class="empty-state">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <h3>No matching applicants found</h3>
+              <p style="color: var(--text-muted);">Try adjusting your search query or status filter.</p>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = apps.map((app, index) => {
+        const id = escapeHtml(app["Applicant ID"] || "N/A");
+        const name = escapeHtml(app["Full Name"] || "N/A");
+        const phone = escapeHtml(app["Phone Number"] || "");
+        const whatsapp = escapeHtml(app["WhatsApp Number"] || phone);
+        const email = escapeHtml(app["Email Address"] || "");
+        const course = escapeHtml(app["Course"] || "AI Development");
+        const fee = escapeHtml(app["Fee (INR)"] || "199");
+        const batch = escapeHtml(app["Batch Timing"] || "Daily Evening");
+        const utr = escapeHtml(app["UPI Reference / UTR"] || "N/A");
+        const screenshot = (app["Screenshot File"] || "None Attached");
+        const status = (app["Verification Status"] || "Pending Manual Verification");
+        const rawTime = app["Timestamp"] || "";
+        const formattedTime = formatTimestamp(rawTime);
+
+        let statusClass = "status-pending";
+        if (status.toLowerCase().includes("verified")) statusClass = "status-verified";
+        if (status.toLowerCase().includes("rejected")) statusClass = "status-rejected";
+
+        const cleanWa = whatsapp.replace(/[^0-9]/g, "");
+        const waUrl = cleanWa ? `https://wa.me/91${cleanWa.slice(-10)}?text=${encodeURIComponent(`Hi ${name}, greeting from GetKnowledge! We are verifying your AI Development cohort enrollment (ID: ${id}).`)}` : "#";
+
+        // SCREENSHOT LOGIC
+        const hasScreenshot = app._hasScreenshot || (
+          screenshot &&
+          screenshot.toLowerCase() !== "none attached" &&
+          screenshot.toLowerCase() !== "none" &&
+          screenshot.toLowerCase() !== "n/a" &&
+          (screenshot.includes("/") || screenshot.includes("."))
+        );
+        const screenshotUrl = app._screenshotUrl || (hasScreenshot ? (screenshot.startsWith("/") ? screenshot : "/" + screenshot) : "");
+
+        const screenshotHtml = hasScreenshot ? `
+          <div class="screenshot-cell">
+            <button type="button" class="screenshot-preview-btn" onclick="openScreenshotModal('${id}', '${name.replace(/'/g, "\\'")}', '${utr.replace(/'/g, "\\'")}', '${screenshotUrl}')" title="Click to view payment proof">
+              <img src="${screenshotUrl}" alt="Proof" class="screenshot-thumb" onerror="this.style.display='none';">
+              <span class="view-proof-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                View Screenshot
+              </span>
+            </button>
+            <label class="btn-replace-screenshot" title="Replace / Upload new screenshot proof">
+              <input type="file" accept="image/*" style="display:none;" onchange="handleUploadScreenshot('${id}', this)">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            </label>
+          </div>
+        ` : `
+          <div class="no-screenshot-cell">
+            <span class="no-proof-pill">No Screenshot</span>
+            <label class="btn-upload-proof" title="Upload payment screenshot proof">
+              <input type="file" accept="image/*" style="display:none;" onchange="handleUploadScreenshot('${id}', this)">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              Upload Proof
+            </label>
+          </div>
+        `;
+
+        return `
+          <tr>
+            <td style="color: var(--text-muted); font-family: var(--font-mono); font-size: 0.75rem;">${index + 1}</td>
+            <td><span class="id-pill">${id}</span></td>
+            <td class="time-cell">${formattedTime}</td>
+            <td class="name-cell">${name}</td>
+            <td>
+              <div class="contact-cell">
+                <a href="${waUrl}" target="_blank" class="wa-link" title="Chat on WhatsApp">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
+                  ${whatsapp}
+                </a>
+                <span style="font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono);">${phone}</span>
+              </div>
+            </td>
+            <td><a href="mailto:${email}" class="email-link">${email}</a></td>
+            <td><strong>${course}</strong> <span style="color: #A78BFA; font-family: var(--font-mono);">(₹${fee})</span></td>
+            <td style="font-size: 0.8rem; color: var(--text-muted);">${batch}</td>
+            <td>
+              <div class="utr-cell">
+                <span>${utr}</span>
+                <button class="copy-btn" onclick="copyText('${utr}', 'UTR copied!')" title="Copy UTR">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                </button>
+              </div>
+            </td>
+            <td>${screenshotHtml}</td>
+            <td>
+              <select class="status-select ${statusClass}" onchange="quickUpdateStatus('${id}', this)">
+                <option value="Pending Manual Verification" ${status.includes("Pending") ? "selected" : ""}>⏳ Pending Manual Verification</option>
+                <option value="Verified & Added to WhatsApp" ${status.includes("Verified") ? "selected" : ""}>✅ Verified & Added to WhatsApp</option>
+                <option value="Rejected / Invalid UTR" ${status.includes("Rejected") ? "selected" : ""}>❌ Rejected / Invalid UTR</option>
+              </select>
+            </td>
+            <td>
+              <div class="actions-cell" style="justify-content: flex-end;">
+                <button class="btn btn-secondary btn-sm btn-icon-only" onclick="openEditModal('${id}')" title="Edit row">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                </button>
+                <button class="btn btn-danger btn-sm btn-icon-only" onclick="openDeleteModal('${id}', '${name.replace(/'/g, "\\'")}')" title="Delete row">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    // OPEN SCREENSHOT LIGHTBOX MODAL
+    function openScreenshotModal(applicantId, name, utr, screenshotUrl) {
+      document.getElementById("modal_ss_subtitle").innerHTML = `
+        Applicant: <strong style="color: #FFFFFF;">${name}</strong> &bull;
+        ID: <span class="id-pill" style="padding: 1px 6px;">${applicantId}</span> &bull;
+        UTR: <strong style="color: #34D399; font-family: var(--font-mono);">${utr}</strong>
+      `;
+
+      const img = document.getElementById("modal_ss_img");
+      img.src = screenshotUrl;
+
+      const openTabBtn = document.getElementById("modal_ss_open_tab");
+      openTabBtn.href = screenshotUrl;
+
+      const downloadBtn = document.getElementById("modal_ss_download");
+      downloadBtn.href = screenshotUrl;
+      downloadBtn.download = `${applicantId}_screenshot.png`;
+
+      // Meta bar with WhatsApp and quick verify button
+      const app = allApplications.find(a => a["Applicant ID"] === applicantId);
+      const whatsapp = app ? (app["WhatsApp Number"] || app["Phone Number"] || "") : "";
+      const cleanWa = whatsapp.replace(/[^0-9]/g, "");
+      const waUrl = cleanWa ? `https://wa.me/91${cleanWa.slice(-10)}?text=${encodeURIComponent(`Hi ${name}, greeting from GetKnowledge! We verified your payment proof (UTR: ${utr}). You are now added to the batch WhatsApp group!`)}` : "#";
+
+      document.getElementById("modal_ss_meta").innerHTML = `
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <a href="${waUrl}" target="_blank" class="btn btn-success btn-sm">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
+            Message on WhatsApp
+          </a>
+          <button class="btn btn-secondary btn-sm" onclick="copyText('${utr}', 'UTR copied to clipboard!')">
+            Copy UTR
+          </button>
+        </div>
+        <div>
+          <button class="btn btn-primary btn-sm" onclick="quickVerifyFromModal('${applicantId}')">
+            ✓ Mark as Verified in Excel
+          </button>
+        </div>
+      `;
+
+      document.getElementById("screenshotModal").classList.add("active");
+    }
+
+    function closeScreenshotModal() {
+      document.getElementById("screenshotModal").classList.remove("active");
+    }
+
+    async function quickVerifyFromModal(applicantId) {
+      try {
+        const res = await fetch('/api/update-row', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            applicantId: applicantId,
+            fields: {
+              "Verification Status": "Verified & Added to WhatsApp",
+              verificationStatus: "Verified & Added to WhatsApp"
+            }
+          })
+        });
+        const result = await res.json();
+        if (res.ok && result.status === 'success') {
+          showToast(`Marked ${applicantId} as Verified in applications.xlsx!`, "success");
+          closeScreenshotModal();
+          fetchApplications();
+        } else {
+          throw new Error(result.message || "Failed to update row");
+        }
+      } catch (err) {
+        showToast("Error updating status: " + err.message, "error");
+      }
+    }
+
+    // UPLOAD / REPLACE SCREENSHOT FROM INLINE BUTTON
+    function handleUploadScreenshot(applicantId, inputElem) {
+      const file = inputElem.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64Data = e.target.result;
+        try {
+          showToast(`Saving screenshot for ${applicantId} to applications.xlsx...`, "success");
+          const res = await fetch('/api/upload-screenshot', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              applicantId: applicantId,
+              fileName: file.name,
+              screenshotBase64: base64Data
+            })
+          });
+          const result = await res.json();
+          if (res.ok && result.status === 'success') {
+            showToast(`Screenshot attached to ${applicantId} and saved to Excel!`, "success");
+            fetchApplications();
+          } else {
+            throw new Error(result.message || "Failed to upload screenshot");
+          }
+        } catch (err) {
+          showToast("Upload error: " + err.message, "error");
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Quick in-table status change
+    async function quickUpdateStatus(applicantId, selectElem) {
+      const newStatus = selectElem.value;
+      const originalValue = selectElem.getAttribute("data-original") || newStatus;
+
+      // Update styling immediately
+      selectElem.className = "status-select";
+      if (newStatus.includes("Verified")) selectElem.classList.add("status-verified");
+      else if (newStatus.includes("Rejected")) selectElem.classList.add("status-rejected");
+      else selectElem.classList.add("status-pending");
+
+      try {
+        const res = await fetch('/api/update-row', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            applicantId: applicantId,
+            fields: {
+              "Verification Status": newStatus,
+              verificationStatus: newStatus
+            }
+          })
+        });
+        const result = await res.json();
+        if (res.ok && result.status === 'success') {
+          showToast(`Saved ${applicantId} status as "${newStatus}" in applications.xlsx`, "success");
+          selectElem.setAttribute("data-original", newStatus);
+          // Update local memory and metrics
+          const found = allApplications.find(a => a["Applicant ID"] === applicantId);
+          if (found) {
+            found["Verification Status"] = newStatus;
+            updateMetrics(allApplications);
+          }
+        } else {
+          throw new Error(result.message || "Failed to update Excel row");
+        }
+      } catch (err) {
+        showToast("Error saving to Excel: " + err.message, "error");
+        selectElem.value = originalValue;
+      }
+    }
+
+    // Search and Filter logic
+    function handleSearch() {
+      applyFilters();
+    }
+
+    function handleFilter() {
+      applyFilters();
+    }
+
+    function applyFilters() {
+      const query = (document.getElementById("searchInput").value || "").toLowerCase().trim();
+      const statusFilter = document.getElementById("statusFilter").value;
+
+      const filtered = allApplications.filter(app => {
+        const matchesStatus = (statusFilter === "ALL") || (app["Verification Status"] || "").toLowerCase().includes(statusFilter.toLowerCase());
+        if (!matchesStatus) return false;
+
+        if (!query) return true;
+
+        const text = [
+          app["Applicant ID"],
+          app["Full Name"],
+          app["Phone Number"],
+          app["WhatsApp Number"],
+          app["Email Address"],
+          app["UPI Reference / UTR"],
+          app["Batch Timing"]
+        ].join(" ").toLowerCase();
+
+        return text.includes(query);
+      });
+
+      renderTable(filtered);
+    }
+
+    // Edit Modal Logic
+    function openEditModal(applicantId) {
+      const app = allApplications.find(a => a["Applicant ID"] === applicantId);
+      if (!app) return;
+
+      editBase64Screenshot = null;
+      editScreenshotName = null;
+      document.getElementById("edit_screenshot_file").value = "";
+      document.getElementById("edit_screenshot_preview_wrap").style.display = "none";
+
+      document.getElementById("edit_applicantId").value = applicantId;
+      document.getElementById("edit_display_id").value = applicantId;
+      document.getElementById("edit_name").value = app["Full Name"] || "";
+      document.getElementById("edit_phone").value = app["Phone Number"] || "";
+      document.getElementById("edit_whatsapp").value = app["WhatsApp Number"] || app["Phone Number"] || "";
+      document.getElementById("edit_email").value = app["Email Address"] || "";
+      document.getElementById("edit_batch").value = app["Batch Timing"] || "Daily Evening (7:30 PM - 9:00 PM IST)";
+      document.getElementById("edit_fee").value = app["Fee (INR)"] || 199;
+      document.getElementById("edit_utr").value = app["UPI Reference / UTR"] || "";
+      document.getElementById("edit_paymentStatus").value = app["Payment Status"] || "Yes, Payment Done";
+      document.getElementById("edit_verificationStatus").value = app["Verification Status"] || "Pending Manual Verification";
+
+      // Show existing screenshot preview if present
+      const screenshot = app["Screenshot File"] || "";
+      const screenshotUrl = app._screenshotUrl || (screenshot && screenshot.includes("/") ? "/" + screenshot : "");
+      if (screenshotUrl) {
+        document.getElementById("edit_screenshot_thumb").src = screenshotUrl;
+        document.getElementById("edit_screenshot_name").textContent = "Current Screenshot Attached";
+        document.getElementById("edit_screenshot_preview_wrap").style.display = "flex";
+      }
+
+      document.getElementById("editModal").classList.add("active");
+    }
+
+    function previewEditScreenshot(inputElem) {
+      const file = inputElem.files[0];
+      if (!file) return;
+      editScreenshotName = file.name;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        editBase64Screenshot = e.target.result;
+        document.getElementById("edit_screenshot_thumb").src = editBase64Screenshot;
+        document.getElementById("edit_screenshot_name").textContent = `Selected: ${file.name}`;
+        document.getElementById("edit_screenshot_preview_wrap").style.display = "flex";
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function closeEditModal() {
+      document.getElementById("editModal").classList.remove("active");
+    }
+
+    async function saveEdit(e) {
+      e.preventDefault();
+      const applicantId = document.getElementById("edit_applicantId").value;
+      const updatedFields = {
+        name: document.getElementById("edit_name").value.trim(),
+        phone: document.getElementById("edit_phone").value.trim(),
+        whatsapp: document.getElementById("edit_whatsapp").value.trim(),
+        email: document.getElementById("edit_email").value.trim(),
+        batch: document.getElementById("edit_batch").value,
+        fee: document.getElementById("edit_fee").value,
+        utr: document.getElementById("edit_utr").value.trim(),
+        paymentStatus: document.getElementById("edit_paymentStatus").value,
+        verificationStatus: document.getElementById("edit_verificationStatus").value
+      };
+
+      if (editBase64Screenshot) {
+        updatedFields.screenshotBase64 = editBase64Screenshot;
+        updatedFields.screenshotFileName = editScreenshotName || "screenshot.png";
+      }
+
+      try {
+        const res = await fetch('/api/update-row', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            applicantId: applicantId,
+            fields: updatedFields
+          })
+        });
+        const result = await res.json();
+        if (res.ok && result.status === 'success') {
+          showToast(`Successfully updated applicant ${applicantId} in Excel!`, "success");
+          closeEditModal();
+          fetchApplications();
+        } else {
+          throw new Error(result.message || "Failed to update row");
+        }
+      } catch (err) {
+        showToast("Error updating row: " + err.message, "error");
+      }
+    }
+
+    // Add Applicant Modal Logic
+    function openAddModal() {
+      document.getElementById("addForm").reset();
+      document.getElementById("addModal").classList.add("active");
+    }
+
+    function closeAddModal() {
+      document.getElementById("addModal").classList.remove("active");
+    }
+
+    async function saveNewApplicant(e) {
+      e.preventDefault();
+      const fileInput = document.getElementById("add_screenshot");
+      const file = fileInput.files[0];
+
+      let base64Img = "";
+      let fileName = "Admin Walk-in";
+      if (file) {
+        fileName = file.name;
+        base64Img = await new Promise((resolve) => {
+          const r = new FileReader();
+          r.onload = () => resolve(r.target.result);
+          r.readAsDataURL(file);
+        });
+      }
+
+      const newRecord = {
+        name: document.getElementById("add_name").value.trim(),
+        phone: document.getElementById("add_phone").value.trim(),
+        whatsapp: document.getElementById("add_whatsapp").value.trim(),
+        email: document.getElementById("add_email").value.trim(),
+        course: "AI Development",
+        fee: document.getElementById("add_fee").value || 199,
+        batch: document.getElementById("add_batch").value,
+        paymentStatus: "Yes, Payment Done",
+        utr: document.getElementById("add_utr").value.trim() || "Manual Entry",
+        screenshotFileName: fileName,
+        screenshotBase64: base64Img,
+        verificationStatus: document.getElementById("add_verificationStatus").value
+      };
+
+      try {
+        const res = await fetch('/api/add-row', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newRecord)
+        });
+        const result = await res.json();
+        if (res.ok && result.status === 'success') {
+          showToast(`Added new applicant (${result.applicantId}) to applications.xlsx!`, "success");
+          closeAddModal();
+          fetchApplications();
+        } else {
+          throw new Error(result.message || "Failed to add row");
+        }
+      } catch (err) {
+        showToast("Error adding applicant: " + err.message, "error");
+      }
+    }
+
+    // Delete Modal Logic
+    function openDeleteModal(applicantId, name) {
+      deleteTargetId = applicantId;
+      document.getElementById("delete_target_name").textContent = name;
+      document.getElementById("delete_target_id").textContent = applicantId;
+      document.getElementById("deleteModal").classList.add("active");
+    }
+
+    function closeDeleteModal() {
+      deleteTargetId = null;
+      document.getElementById("deleteModal").classList.remove("active");
+    }
+
+    async function confirmDelete() {
+      if (!deleteTargetId) return;
+      try {
+        const res = await fetch('/api/delete-row', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ applicantId: deleteTargetId })
+        });
+        const result = await res.json();
+        if (res.ok && result.status === 'success') {
+          showToast(`Deleted ${deleteTargetId} from applications.xlsx`, "success");
+          closeDeleteModal();
+          fetchApplications();
+        } else {
+          throw new Error(result.message || "Failed to delete row");
+        }
+      } catch (err) {
+        showToast("Error deleting: " + err.message, "error");
+      }
+    }
+
+    // Utilities
+    function formatTimestamp(isoStr) {
+      if (!isoStr) return "-";
+      try {
+        const d = new Date(isoStr);
+        if (isNaN(d.getTime())) return isoStr;
+        return d.toLocaleDateString("en-IN", {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric'
+        }) + " " + d.toLocaleTimeString("en-IN", {
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      } catch {
+        return isoStr;
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function copyText(text, toastMsg) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast(toastMsg || "Copied to clipboard!", "success");
+      }).catch(() => {
+        showToast("Failed to copy", "error");
+      });
+    }
+
+    function showToast(message, type = "success") {
+      const container = document.getElementById("toastContainer");
+      const toast = document.createElement("div");
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `
+        <span>${type === 'success' ? '✓' : '⚠️'}</span>
+        <span>${escapeHtml(message)}</span>
+      `;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(10px)';
+        toast.style.transition = 'all 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" fill="none">
+  <circle cx="60" cy="60" r="56" fill="#f0fdf4" stroke="#10b981" stroke-width="3" />
+  <!-- Shoulders & Dark Tech Outfit -->
+  <path d="M 22 106 C 22 86 38 78 60 78 C 82 78 98 86 98 106 Z" fill="#0f172a" />
+  <path d="M 52 78 L 60 92 L 68 78 Z" fill="#38bdf8" />
+  <!-- Head -->
+  <circle cx="60" cy="50" r="22" fill="#fed7aa" />
+  <!-- Stylish Hair -->
+  <path d="M 36 42 C 36 26 49 20 60 20 C 72 20 84 26 84 42 C 77 32 66 30 60 30 C 54 30 43 32 36 42 Z" fill="#1e293b" />
+  <!-- Eyes -->
+  <circle cx="51" cy="49" r="2.5" fill="#0f172a" />
+  <circle cx="69" cy="49" r="2.5" fill="#0f172a" />
+  <!-- Specs / Tech Glasses -->
+  <rect x="44" y="44" width="14" height="10" rx="3" fill="none" stroke="#0284c7" stroke-width="2" />
+  <rect x="62" y="44" width="14" height="10" rx="3" fill="none" stroke="#0284c7" stroke-width="2" />
+  <line x1="58" y1="49" x2="62" y2="49" stroke="#0284c7" stroke-width="2" />
+  <!-- Confident Smile -->
+  <path d="M 53 62 C 57 66 63 66 67 62" stroke="#7c2d12" stroke-width="2" stroke-linecap="round" fill="none" />
+</svg>

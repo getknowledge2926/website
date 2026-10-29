@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" fill="none">
+  <circle cx="60" cy="60" r="56" fill="#fef3c7" stroke="#f59e0b" stroke-width="3" />
+  <!-- Hair -->
+  <path d="M 34 50 C 34 30 45 22 60 22 C 75 22 86 30 86 50 C 86 70 82 85 82 85 L 38 85 C 38 85 34 70 34 50 Z" fill="#292524" />
+  <!-- Shoulders & Outfit -->
+  <path d="M 24 105 C 24 88 38 80 60 80 C 82 80 96 88 96 105 Z" fill="#b45309" />
+  <!-- Head -->
+  <circle cx="60" cy="52" r="21" fill="#fed7aa" />
+  <!-- Glasses -->
+  <rect x="46" y="47" width="12" height="9" rx="2" stroke="#451a03" stroke-width="2" fill="none" />
+  <rect x="62" y="47" width="12" height="9" rx="2" stroke="#451a03" stroke-width="2" fill="none" />
+  <line x1="58" y1="51" x2="62" y2="51" stroke="#451a03" stroke-width="2" />
+  <!-- Smile -->
+  <path d="M 54 63 C 58 67 62 67 66 63" stroke="#78350f" stroke-width="2" stroke-linecap="round" fill="none" />
+</svg>

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" fill="none">
+  <circle cx="60" cy="60" r="56" fill="#f0fdf4" stroke="#22c55e" stroke-width="3" />
+  <!-- Shoulders & Outfit -->
+  <path d="M 24 105 C 24 88 38 80 60 80 C 82 80 96 88 96 105 Z" fill="#15803d" />
+  <path d="M 54 80 L 60 90 L 66 80 Z" fill="#ffffff" />
+  <!-- Head & Hair -->
+  <circle cx="60" cy="52" r="22" fill="#fed7aa" />
+  <path d="M 38 46 C 38 28 50 24 60 24 C 70 24 82 28 82 46 C 75 38 65 34 60 34 C 52 34 44 38 38 46 Z" fill="#18181b" />
+  <!-- Beard trim -->
+  <path d="M 46 60 C 46 72 54 75 60 75 C 66 75 74 72 74 60 C 74 66 66 71 60 71 C 54 71 46 66 46 60 Z" fill="#27272a" />
+  <!-- Eyes -->
+  <circle cx="51" cy="50" r="2.5" fill="#18181b" />
+  <circle cx="69" cy="50" r="2.5" fill="#18181b" />
+  <!-- Smile -->
+  <path d="M 55 62 C 58 65 62 65 65 62" stroke="#7c2d12" stroke-width="2" stroke-linecap="round" fill="none" />
+</svg>

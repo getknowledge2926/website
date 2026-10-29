@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" fill="none">
+  <circle cx="60" cy="60" r="56" fill="#e0f2fe" stroke="#0284c7" stroke-width="3" />
+  <!-- Shoulders & Outfit -->
+  <path d="M 24 105 C 24 88 38 80 60 80 C 82 80 96 88 96 105 Z" fill="#0369a1" />
+  <path d="M 52 80 L 60 92 L 68 80 Z" fill="#bae6fd" />
+  <!-- Head & Modern Fade Hair -->
+  <circle cx="60" cy="52" r="22" fill="#fed7aa" />
+  <path d="M 37 44 C 37 28 50 22 60 22 C 72 22 83 28 83 44 C 76 34 66 32 60 32 C 54 32 44 34 37 44 Z" fill="#0c4a6e" />
+  <!-- Eyes -->
+  <circle cx="51" cy="51" r="2.5" fill="#0f172a" />
+  <circle cx="69" cy="51" r="2.5" fill="#0f172a" />
+  <!-- Smile -->
+  <path d="M 54 63 C 58 67 62 67 66 63" stroke="#7c2d12" stroke-width="2" stroke-linecap="round" fill="none" />
+</svg>

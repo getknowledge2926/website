@@ -1,0 +1,213 @@
+/* ==============================================================================
+   Get Knowledge - Responsive Breakpoints & Mobile Enhancements
+   ============================================================================== */
+
+/* --- Large Desktops (1200px and below) --- */
+@media (max-width: 1200px) {
+  .hero-grid {
+    gap: 2.5rem;
+  }
+
+  .course-details-layout {
+    grid-template-columns: 1.6fr 1.1fr;
+    gap: 2rem;
+  }
+
+  .footer-grid {
+    grid-template-columns: 1.4fr 1fr 1fr 1.2fr;
+    gap: 2rem;
+  }
+}
+
+/* --- Medium Devices / Tablets (1024px and below) --- */
+@media (max-width: 1024px) {
+  .section {
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+  }
+
+  .hero-grid {
+    grid-template-columns: 1fr;
+    gap: 3.5rem;
+  }
+
+  .hero-card {
+    max-width: 580px;
+    margin: 0 auto;
+  }
+
+  .enrollment-timeline {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .payment-grid {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+
+  .course-details-layout {
+    grid-template-columns: 1fr;
+    margin-top: 2rem;
+  }
+
+  .course-sticky-sidebar {
+    position: static;
+    margin-top: 2rem;
+  }
+
+  .contact-grid {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+  }
+}
+
+/* --- Small Tablets / Large Phones (768px and below) --- */
+@media (max-width: 768px) {
+  .nav-links, .nav-actions .btn-desktop {
+    display: none;
+  }
+
+  .nav-toggle-btn {
+    display: flex;
+  }
+
+  .top-center-brand-header {
+    padding: 1.15rem 0.75rem 1rem 0.75rem;
+  }
+
+  .top-center-logo-img {
+    height: 72px;
+    width: 72px;
+  }
+
+  .top-center-brand-name {
+    font-size: 2.25rem;
+  }
+
+  .top-center-tagline {
+    font-size: 0.72rem;
+    letter-spacing: 0.2em;
+  }
+
+  .hero-title {
+    font-size: 2.35rem;
+  }
+
+  .hero-highlights {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .section-title {
+    font-size: 1.85rem;
+  }
+
+  .courses-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .enrollment-timeline {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .policy-content {
+    padding: 1.75rem;
+  }
+
+  .payment-card, .contact-info-card, .contact-form-card, .course-content-col {
+    padding: 1.5rem;
+  }
+
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .footer-bottom {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+/* --- Mobile Devices (480px and below) --- */
+@media (max-width: 480px) {
+  .container {
+    padding-left: 1.15rem;
+    padding-right: 1.15rem;
+  }
+
+  .top-center-logo-img {
+    height: 62px;
+    width: 62px;
+  }
+
+  .top-center-brand-name {
+    font-size: 1.85rem;
+  }
+
+  .top-center-tagline {
+    font-size: 0.65rem;
+    letter-spacing: 0.16em;
+  }
+
+  .hero {
+    padding: 3.5rem 0 3rem 0;
+  }
+
+  .hero-title {
+    font-size: 1.95rem;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .hero-actions .btn {
+    width: 100%;
+  }
+
+  .hero-card {
+    padding: 1.5rem;
+  }
+
+  .course-card-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .course-card-actions {
+    width: 100%;
+  }
+
+  .course-card-actions .btn {
+    flex: 1;
+    text-align: center;
+  }
+
+  .bank-table td {
+    padding: 0.65rem 0.75rem;
+    font-size: 0.8125rem;
+  }
+
+  .upi-id-copy-box {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .toast-notification {
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+    justify-content: center;
+  }
+}
