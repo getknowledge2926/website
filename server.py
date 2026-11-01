@@ -383,22 +383,27 @@ def check_duplicate_utr(new_utr):
 
     clean_utr = new_utr.strip().upper()
 
-    # 1. Check Supabase permanent cloud database first
-    try:
-        encoded_utr = urllib.parse.quote(clean_utr)
-        rows = supabase_request(f"applications?upi_reference=eq.{encoded_utr}&select=*", method="GET")
-        if rows and len(rows) > 0:
-            r = rows[0]
-            match_info = {
-                "applicantId": r.get("applicant_id", ""),
-                "name": r.get("full_name", ""),
-                "timestamp": r.get("created_at", "")
-            }
-            return True, match_info
-    except Exception as ex:
-        print(f"[!] Supabase duplicate UTR check note: {ex}")
+    # 1. Check Supabase permanent cloud database first (authoritative source of truth)
+    url, key = get_supabase_config()
+    if url and key:
+        try:
+            encoded_utr = urllib.parse.quote(clean_utr)
+            rows = supabase_request(f"applications?upi_reference=eq.{encoded_utr}&select=*", method="GET")
+            if rows is not None:
+                if len(rows) > 0:
+                    r = rows[0]
+                    match_info = {
+                        "applicantId": r.get("applicant_id", ""),
+                        "name": r.get("full_name", ""),
+                        "timestamp": r.get("created_at", "")
+                    }
+                    return True, match_info
+                # Supabase database responded and verified 0 matching records: NOT a duplicate!
+                return False, None
+        except Exception as ex:
+            print(f"[!] Supabase duplicate UTR check note: {ex}")
 
-    # 2. Check local applications.xlsx fallback
+    # 2. Check local applications.xlsx fallback ONLY if Supabase is offline / unreachable
     ensure_xlsx_exists()
     try:
         wb = openpyxl.load_workbook(XLSX_FILENAME, data_only=True)

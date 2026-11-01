@@ -245,26 +245,10 @@ function openPaymentProofModal() {
       const whatsapp = document.getElementById('proofWhatsApp') ? document.getElementById('proofWhatsApp').value.trim() : '';
       const utr = document.getElementById('proofUtr').value.trim();
 
-      // Check local cache for duplicate UTR
-      let cachedUtrs = [];
+      // Automatically clear any legacy client-side cached UTRs
       try {
-        cachedUtrs = JSON.parse(localStorage.getItem('gk_submitted_utrs') || '[]');
-      } catch (err) {
-        cachedUtrs = [];
-      }
-
-      const cleanUtr = utr.replace(/[\s\-_]/g, '').toUpperCase();
-      const isDuplicateLocal = cachedUtrs.some(item => {
-        return String(item).replace(/[\s\-_]/g, '').toUpperCase() === cleanUtr;
-      });
-
-      if (isDuplicateLocal) {
-        if (duplicateBox && duplicateMsg) {
-          duplicateMsg.innerHTML = `<strong>Duplicate UPI Reference Found:</strong> The UPI Reference / UTR Number <strong>${escapeHtml(utr)}</strong> has already been submitted! If you need assistance, please contact our team at +91 96262 61123 or getknowledge2026@gmail.com.`;
-          duplicateBox.style.display = 'block';
-        }
-        return;
-      }
+        localStorage.removeItem('gk_submitted_utrs');
+      } catch (e) {}
 
       if (proofSubmitBtn) {
         proofSubmitBtn.disabled = true;
@@ -322,10 +306,9 @@ function openPaymentProofModal() {
         }
       }
 
-      // Save to local cache
+      // Clear any legacy client cache
       try {
-        cachedUtrs.push(utr);
-        localStorage.setItem('gk_submitted_utrs', JSON.stringify(cachedUtrs));
+        localStorage.removeItem('gk_submitted_utrs');
       } catch (e) {}
 
       const emailTextEl = document.getElementById('proofSuccessEmailText');

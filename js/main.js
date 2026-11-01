@@ -746,30 +746,10 @@ function initApplicationModal() {
       return;
     }
 
-    // 3. Instant Client-Side Duplicate UPI Reference Check
-    let cachedUtrs = [];
+    // Automatically clear any legacy client-side cached UTRs
     try {
-      cachedUtrs = JSON.parse(localStorage.getItem('gk_submitted_utrs') || '[]');
-    } catch (err) {
-      cachedUtrs = [];
-    }
-
-    const cleanUtr = utr.replace(/[\s\-_]/g, '').toUpperCase();
-    const isDuplicateLocal = cachedUtrs.some(item => {
-      const existingClean = String(item).replace(/[\s\-_]/g, '').toUpperCase();
-      return existingClean === cleanUtr;
-    });
-
-    if (isDuplicateLocal) {
-      if (duplicateAlertBox && duplicateAlertMsg) {
-        duplicateAlertMsg.innerHTML = `<strong>Duplicate UPI Reference Found:</strong> The UPI Reference / UTR Number <strong>${escapeHtml(utr)}</strong> has already been submitted! If you already paid or need assistance, please contact our team at +91 96262 61123 or getknowledge2026@gmail.com.`;
-        duplicateAlertBox.style.display = 'block';
-        duplicateAlertBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Submit Application →';
-      return;
-    }
+      localStorage.removeItem('gk_submitted_utrs');
+    } catch (e) {}
 
     const applicantId = 'GK' + Math.floor(100000 + Math.random() * 900000);
 
@@ -804,16 +784,10 @@ function initApplicationModal() {
       return;
     }
 
-    // 3. Cache valid UTR locally to prevent repeated submissions
-    if (utr) {
-      try {
-        const cachedUtrs = JSON.parse(localStorage.getItem('gk_submitted_utrs') || '[]');
-        cachedUtrs.push(utr);
-        localStorage.setItem('gk_submitted_utrs', JSON.stringify(cachedUtrs));
-      } catch (err) {
-        console.warn('Could not cache UTR:', err);
-      }
-    }
+    // 3. Clear any old local cache
+    try {
+      localStorage.removeItem('gk_submitted_utrs');
+    } catch (err) {}
 
     // 4. Update Success State UI
     const successMsgEl = document.getElementById('appSuccessMessageText');
@@ -924,14 +898,11 @@ function compressImage(dataUrl, maxWidth, quality, callback) {
  * 2. Falls back gracefully to Google Apps Script or browser localStorage if static
  */
 async function submitApplicationRecord(data) {
-  // Always save in browser localStorage as immediate permanent backup
+  // Clear any legacy client cache: the Supabase cloud database is the sole source of truth
   try {
-    const list = JSON.parse(localStorage.getItem('gk_applications_list') || '[]');
-    list.unshift(data);
-    localStorage.setItem('gk_applications_list', JSON.stringify(list));
-  } catch (e) {
-    console.warn('Could not save to localStorage:', e);
-  }
+    localStorage.removeItem('gk_applications_list');
+    localStorage.removeItem('gk_submitted_utrs');
+  } catch (e) {}
 
   // 1. Submit to Python Backend Server /api/apply
   const candidateEndpoints = ['/api/apply'];
