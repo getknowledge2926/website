@@ -939,7 +939,7 @@ class GetKnowledgeRequestHandler(SimpleHTTPRequestHandler):
             if supa_res is not None or success:
                 self.send_json_response(200, {
                     "status": "success",
-                    "message": f"Applicant '{applicant_id}' permanently deleted from Supabase database and Excel."
+                    "message": f"Applicant '{applicant_id}' permanently deleted from database."
                 })
             else:
                 self.send_json_response(404, {"status": "error", "message": f"Applicant ID '{applicant_id}' not found."})
@@ -972,7 +972,7 @@ class GetKnowledgeRequestHandler(SimpleHTTPRequestHandler):
                 append_to_xlsx(data)
                 self.send_json_response(200, {
                     "status": "success",
-                    "message": f"Added applicant {data['applicantId']} to Supabase and applications.xlsx",
+                    "message": f"Added applicant {data['applicantId']} to database",
                     "applicantId": data["applicantId"]
                 })
             except Exception as e:
