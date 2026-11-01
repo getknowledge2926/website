@@ -89,6 +89,90 @@ def get_admin_token():
     pw = get_admin_password()
     return hashlib.sha256(f"gk_portal_salt_2026_{pw}".encode("utf-8")).hexdigest()
 
+def get_google_sheet_url():
+    """Retrieve Google Sheet Webhook URL from GOOGLE_SHEET_URL or EMAIL_WEBHOOK_URL."""
+    url = os.environ.get("GOOGLE_SHEET_URL", "").strip()
+    if not url:
+        url = os.environ.get("EMAIL_WEBHOOK_URL", "").strip()
+    if not url and os.path.exists(".env"):
+        try:
+            with open(".env", "r") as f:
+                for line in f:
+                    line = line.strip()
+                    if line.startswith("GOOGLE_SHEET_URL="):
+                        url = line.split("=", 1)[1].strip().strip('"').strip("'")
+                        break
+                    elif line.startswith("EMAIL_WEBHOOK_URL=") and not url:
+                        url = line.split("=", 1)[1].strip().strip('"').strip("'")
+        except Exception:
+            pass
+    return url
+
+def call_google_sheet_api(action, data=None):
+    """Sends action and payload to Google Apps Script Web App attached to the Google Sheet."""
+    sheet_url = get_google_sheet_url()
+    if not sheet_url or not sheet_url.startswith("https://script.google.com/"):
+        return None
+    try:
+        payload = dict(data or {})
+        payload["action"] = action
+        req = urllib.request.Request(
+            sheet_url,
+            data=json.dumps(payload).encode("utf-8"),
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json, text/plain, */*",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            }
+        )
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            body = resp.read().decode("utf-8")
+            return json.loads(body)
+    except Exception as e:
+        print(f"[!] Google Sheet API call failed for '{action}': {e}")
+        return None
+
+def sync_sheet_to_xlsx(headers, apps):
+    """Rebuilds local applications.xlsx from Google Sheet applications."""
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Applications"
+    ws.append(headers)
+
+    header_fill = PatternFill(start_color="0C2340", end_color="0C2340", fill_type="solid")
+    header_font = Font(name="Arial", size=11, bold=True, color="FFFFFF")
+    header_align = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    thin_border = Border(
+        left=Side(style="thin", color="D2D6DC"),
+        right=Side(style="thin", color="D2D6DC"),
+        top=Side(style="thin", color="D2D6DC"),
+        bottom=Side(style="thin", color="D2D6DC")
+    )
+    ws.row_dimensions[1].height = 28
+    for cell in ws[1]:
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = header_align
+        cell.border = thin_border
+    ws.freeze_panes = "A2"
+
+    cell_border = Border(
+        left=Side(style="thin", color="E2E8F0"),
+        right=Side(style="thin", color="E2E8F0"),
+        top=Side(style="thin", color="E2E8F0"),
+        bottom=Side(style="thin", color="E2E8F0")
+    )
+
+    for app in apps:
+        row_vals = []
+        for h in headers:
+            row_vals.append(app.get(h, ""))
+        ws.append(row_vals)
+        for cell in ws[ws.max_row]:
+            cell.border = cell_border
+
+    wb.save(XLSX_FILENAME)
+
 def ensure_xlsx_exists():
     """Ensure applications.xlsx exists with styled headers."""
     if os.path.exists(XLSX_FILENAME):
@@ -597,24 +681,29 @@ class GetKnowledgeRequestHandler(SimpleHTTPRequestHandler):
             try:
                 append_to_xlsx(data)
             except Exception as e:
-                print(f"[!] Error writing to XLSX: {e}")
-                self.send_json_response(500, {
-                    "status": "error",
-                    "message": f"Failed to record application to Excel: {e}"
+                print(f"[!] Error writing to local XLSX: {e}")
+
+            # 3. Synchronize with Google Sheet (which also dispatches confirmation email!)
+            sheet_res = call_google_sheet_api("apply", data)
+            if sheet_res and sheet_res.get("status") == "duplicate":
+                self.send_json_response(409, {
+                    "status": "duplicate",
+                    "message": sheet_res.get("message")
                 })
                 return
 
-            # 3. Send automatic confirmation email in background thread so client response is instant!
-            try:
-                email_thread = threading.Thread(target=send_confirmation_email, args=(dict(data),), daemon=True)
-                email_thread.start()
-            except Exception as e:
-                print(f"[!] Email thread start failed: {e}")
+            # 4. If Google Sheet did not handle email dispatch, run background email thread
+            if not sheet_res or sheet_res.get("status") != "success":
+                try:
+                    email_thread = threading.Thread(target=send_confirmation_email, args=(dict(data),), daemon=True)
+                    email_thread.start()
+                except Exception as e:
+                    print(f"[!] Email thread start failed: {e}")
 
-            # 4. Return success response immediately
+            # 5. Return success response immediately
             self.send_json_response(200, {
                 "status": "success",
-                "message": "Application recorded successfully in applications.xlsx!",
+                "message": "Application recorded successfully!",
                 "applicantId": data.get("applicantId")
             })
             return
@@ -636,9 +725,18 @@ class GetKnowledgeRequestHandler(SimpleHTTPRequestHandler):
                 self.send_json_response(400, {"status": "error", "message": "Applicant ID is required."})
                 return
 
-            success, msg = update_xlsx_row(applicant_id, data.get("fields", data))
-            code = 200 if success else 404
-            self.send_json_response(code, {"status": "success" if success else "error", "message": msg})
+            fields = data.get("fields", data)
+
+            # 1. Update in Google Sheet
+            sheet_res = call_google_sheet_api("update", {"applicantId": applicant_id, "fields": fields})
+
+            # 2. Update in local applications.xlsx
+            success, msg = update_xlsx_row(applicant_id, fields)
+            code = 200 if (success or (sheet_res and sheet_res.get("status") == "success")) else 404
+            self.send_json_response(code, {
+                "status": "success" if code == 200 else "error",
+                "message": (sheet_res and sheet_res.get("message")) or msg
+            })
             return
 
         if self.path == "/api/delete-row":
@@ -658,9 +756,19 @@ class GetKnowledgeRequestHandler(SimpleHTTPRequestHandler):
                 self.send_json_response(400, {"status": "error", "message": "Applicant ID is required."})
                 return
 
+            # 1. Permanently delete from Google Sheet!
+            sheet_res = call_google_sheet_api("delete", {"applicantId": applicant_id})
+
+            # 2. Delete from local applications.xlsx
             success, msg = delete_xlsx_row(applicant_id)
-            code = 200 if success else 404
-            self.send_json_response(code, {"status": "success" if success else "error", "message": msg})
+
+            if (sheet_res and sheet_res.get("status") == "success") or success:
+                self.send_json_response(200, {
+                    "status": "success",
+                    "message": f"Applicant '{applicant_id}' permanently deleted from Google Sheet and Excel."
+                })
+            else:
+                self.send_json_response(404, {"status": "error", "message": f"Applicant ID '{applicant_id}' not found."})
             return
 
         if self.path == "/api/add-row":
@@ -679,11 +787,15 @@ class GetKnowledgeRequestHandler(SimpleHTTPRequestHandler):
                 import random
                 data["applicantId"] = f"GK{random.randint(100000, 999999)}"
 
+            # 1. Add to Google Sheet
+            call_google_sheet_api("add", data)
+
+            # 2. Add to local applications.xlsx
             try:
                 append_to_xlsx(data)
                 self.send_json_response(200, {
                     "status": "success",
-                    "message": f"Added applicant {data['applicantId']} to applications.xlsx",
+                    "message": f"Added applicant {data['applicantId']} to Google Sheet and applications.xlsx",
                     "applicantId": data["applicantId"]
                 })
             except Exception as e:
@@ -744,6 +856,21 @@ class GetKnowledgeRequestHandler(SimpleHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(b"Unauthorized: Admin password required.")
                 return
+
+            # Sync latest rows from Google Sheet if connected
+            sheet_res = call_google_sheet_api("getAll")
+            if sheet_res and isinstance(sheet_res, dict) and "applications" in sheet_res:
+                sheet_apps = sheet_res.get("applications", [])
+                sheet_headers = sheet_res.get("headers", [
+                    "Timestamp", "Applicant ID", "Full Name", "Phone Number", "WhatsApp Number",
+                    "Email Address", "Course", "Fee (INR)", "Batch Timing", "Payment Status",
+                    "UPI Reference / UTR", "Screenshot File", "Verification Status"
+                ])
+                try:
+                    sync_sheet_to_xlsx(sheet_headers, sheet_apps)
+                except Exception as ex:
+                    print(f"[!] Sync sheet before download note: {ex}")
+
             if not os.path.exists(XLSX_FILENAME):
                 ensure_xlsx_exists()
             try:
@@ -764,13 +891,36 @@ class GetKnowledgeRequestHandler(SimpleHTTPRequestHandler):
             if not self.check_admin_auth():
                 self.send_json_response(401, {"status": "unauthorized", "message": "Admin authorization required."})
                 return
+
+            # 1. Try to fetch live applications directly from Google Sheet!
+            sheet_res = call_google_sheet_api("getAll")
+            if sheet_res and isinstance(sheet_res, dict) and "applications" in sheet_res:
+                sheet_apps = sheet_res.get("applications", [])
+                sheet_headers = sheet_res.get("headers", [
+                    "Timestamp", "Applicant ID", "Full Name", "Phone Number", "WhatsApp Number",
+                    "Email Address", "Course", "Fee (INR)", "Batch Timing", "Payment Status",
+                    "UPI Reference / UTR", "Screenshot File", "Verification Status"
+                ])
+                try:
+                    sync_sheet_to_xlsx(sheet_headers, sheet_apps)
+                except Exception as ex:
+                    print(f"[!] Sync sheet to xlsx note: {ex}")
+                self.send_json_response(200, {
+                    "count": len(sheet_apps),
+                    "headers": sheet_headers,
+                    "applications": sheet_apps,
+                    "source": "google_sheet"
+                })
+                return
+
+            # 2. Fallback to local applications.xlsx if Google Sheet is not configured or offline
             ensure_xlsx_exists()
             try:
                 wb = openpyxl.load_workbook(XLSX_FILENAME, data_only=True)
                 ws = wb.active
                 rows = list(ws.iter_rows(values_only=True))
                 if len(rows) <= 1:
-                    self.send_json_response(200, {"count": 0, "headers": [], "applications": []})
+                    self.send_json_response(200, {"count": 0, "headers": [], "applications": [], "source": "local_xlsx"})
                     return
                 headers = [str(h) for h in rows[0]]
                 apps = []
@@ -793,7 +943,7 @@ class GetKnowledgeRequestHandler(SimpleHTTPRequestHandler):
                     record["_hasScreenshot"] = has_img
                     record["_screenshotUrl"] = img_url
                     apps.append(record)
-                self.send_json_response(200, {"count": len(apps), "headers": headers, "applications": apps})
+                self.send_json_response(200, {"count": len(apps), "headers": headers, "applications": apps, "source": "local_xlsx"})
                 return
             except Exception as e:
                 self.send_json_response(500, {"status": "error", "message": str(e)})
