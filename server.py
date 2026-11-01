@@ -27,6 +27,7 @@ import datetime
 import time
 import threading
 import urllib.request
+import urllib.parse
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import socket
@@ -88,6 +89,154 @@ def get_admin_token():
     """Deterministic secure session token derived from current ADMIN_PASSWORD."""
     pw = get_admin_password()
     return hashlib.sha256(f"gk_portal_salt_2026_{pw}".encode("utf-8")).hexdigest()
+
+# ----------------------------------------------------------------------------
+# SUPABASE PERMANENT CLOUD DATABASE CLIENT
+# ----------------------------------------------------------------------------
+def get_supabase_config():
+    """
+    Retrieve Supabase URL and Secret Key strictly from Render Environment Variables
+    or local .env file. No credentials are hardcoded.
+    """
+    url = os.environ.get("SUPABASE_URL", "").strip()
+    key = os.environ.get("SUPABASE_KEY", "").strip()
+    if not url or not key:
+        if os.path.exists(".env"):
+            try:
+                with open(".env", "r") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line.startswith("SUPABASE_URL="):
+                            url = line.split("=", 1)[1].strip().strip('"').strip("'")
+                        elif line.startswith("SUPABASE_KEY="):
+                            key = line.split("=", 1)[1].strip().strip('"').strip("'")
+            except Exception:
+                pass
+    return url.rstrip("/"), key
+
+def supabase_request(path, method="GET", data=None):
+    """Direct HTTPS REST request to Supabase PostgreSQL database."""
+    url, key = get_supabase_config()
+    if not url or not key:
+        print("[!] Supabase request skipped: SUPABASE_URL or SUPABASE_KEY not set in Environment.")
+        return None
+    full_url = f"{url}/rest/v1/{path.lstrip('/')}"
+    headers = {
+        "apikey": key,
+        "Authorization": f"Bearer {key}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Prefer": "return=representation"
+    }
+    body = json.dumps(data).encode("utf-8") if data is not None else None
+    try:
+        req = urllib.request.Request(full_url, data=body, headers=headers, method=method)
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            content = resp.read().decode("utf-8")
+            if content:
+                return json.loads(content)
+            return []
+    except Exception as e:
+        print(f"[!] Supabase request error ({method} {path}): {e}")
+        return None
+
+def supabase_get_all_applications():
+    """Fetch all student applications from Supabase ordered by newest first."""
+    rows = supabase_request("applications?select=*&order=created_at.desc", method="GET")
+    if rows is None:
+        return None
+    apps = []
+    for idx, r in enumerate(rows, start=2):
+        s_val = str(r.get("screenshot_file") or "").strip()
+        has_img = False
+        img_url = ""
+        if s_val and s_val.lower() not in ["none", "none attached", "n/a", ""]:
+            has_img = True
+            img_url = s_val if (s_val.startswith("data:") or s_val.startswith("http")) else ("/" + s_val.lstrip("/"))
+        app = {
+            "_rowIndex": idx,
+            "Timestamp": str(r.get("created_at") or ""),
+            "Applicant ID": str(r.get("applicant_id") or ""),
+            "Full Name": str(r.get("full_name") or ""),
+            "Phone Number": str(r.get("phone_number") or ""),
+            "WhatsApp Number": str(r.get("whatsapp_number") or ""),
+            "Email Address": str(r.get("email_address") or ""),
+            "Course": str(r.get("course") or "AI Development"),
+            "Fee (INR)": str(r.get("fee") or 199),
+            "Batch Timing": str(r.get("batch_timing") or ""),
+            "Payment Status": str(r.get("payment_status") or ""),
+            "UPI Reference / UTR": str(r.get("upi_reference") or "N/A"),
+            "Screenshot File": s_val,
+            "Verification Status": str(r.get("verification_status") or "Pending Manual Verification"),
+            "_hasScreenshot": has_img,
+            "_screenshotUrl": img_url
+        }
+        apps.append(app)
+    return apps
+
+def supabase_insert_application(record):
+    """Insert a new student application into Supabase."""
+    s_val = record.get("screenshotFileName", "")
+    if record.get("screenshotBase64"):
+        saved_path = save_base64_screenshot(
+            record.get("applicantId", "GK000000"),
+            s_val,
+            record.get("screenshotBase64")
+        )
+        s_val = saved_path
+
+    row_data = {
+        "applicant_id": record.get("applicantId"),
+        "full_name": record.get("name", ""),
+        "phone_number": record.get("phone", ""),
+        "whatsapp_number": record.get("whatsapp", record.get("phone", "")),
+        "email_address": record.get("email", ""),
+        "course": record.get("course", "AI Development"),
+        "fee": record.get("fee", 199),
+        "batch_timing": record.get("batch", "Daily Evening (7:30 PM - 9:00 PM IST)"),
+        "payment_status": record.get("paymentStatus", "Yes, Payment Done"),
+        "upi_reference": record.get("utr", "N/A"),
+        "screenshot_file": s_val,
+        "verification_status": record.get("verificationStatus", "Pending Manual Verification")
+    }
+    return supabase_request("applications", method="POST", data=row_data)
+
+def supabase_update_application(applicant_id, fields):
+    """Update applicant details or verification status in Supabase."""
+    update_data = {}
+    if "verificationStatus" in fields or "Verification Status" in fields:
+        update_data["verification_status"] = fields.get("verificationStatus") or fields.get("Verification Status")
+    if "paymentStatus" in fields or "Payment Status" in fields:
+        update_data["payment_status"] = fields.get("paymentStatus") or fields.get("Payment Status")
+    if "batch" in fields or "Batch Timing" in fields:
+        update_data["batch_timing"] = fields.get("batch") or fields.get("Batch Timing")
+    if "name" in fields or "Full Name" in fields:
+        update_data["full_name"] = fields.get("name") or fields.get("Full Name")
+    if "phone" in fields or "Phone Number" in fields:
+        update_data["phone_number"] = fields.get("phone") or fields.get("Phone Number")
+    if "whatsapp" in fields or "WhatsApp Number" in fields:
+        update_data["whatsapp_number"] = fields.get("whatsapp") or fields.get("WhatsApp Number")
+    if "email" in fields or "Email Address" in fields:
+        update_data["email_address"] = fields.get("email") or fields.get("Email Address")
+    if "utr" in fields or "UPI Reference / UTR" in fields:
+        update_data["upi_reference"] = fields.get("utr") or fields.get("UPI Reference / UTR")
+    if "screenshotFileName" in fields or "Screenshot File" in fields:
+        update_data["screenshot_file"] = fields.get("screenshotFileName") or fields.get("Screenshot File")
+    if "screenshotBase64" in fields and fields["screenshotBase64"]:
+        saved_path = save_base64_screenshot(
+            applicant_id,
+            fields.get("screenshotFileName", "screenshot.png"),
+            fields["screenshotBase64"]
+        )
+        update_data["screenshot_file"] = saved_path
+
+    if not update_data:
+        return []
+    return supabase_request(f"applications?applicant_id=eq.{applicant_id}", method="PATCH", data=update_data)
+
+def supabase_delete_application(applicant_id):
+    """Permanently delete an applicant row from Supabase."""
+    return supabase_request(f"applications?applicant_id=eq.{applicant_id}", method="DELETE")
 
 def get_google_sheet_url():
     """Retrieve Google Sheet Webhook URL from GOOGLE_SHEET_URL or EMAIL_WEBHOOK_URL."""
@@ -226,15 +375,31 @@ def ensure_xlsx_exists():
 
 def check_duplicate_utr(new_utr):
     """
-    Check if the given UPI Reference Number (UTR) already exists in applications.xlsx.
+    Check if the given UPI Reference Number (UTR) already exists in Supabase or applications.xlsx.
     Returns (is_duplicate: bool, matching_row: dict or None)
     """
     if not new_utr or new_utr.strip().upper() in ["N/A", "NONE", "PENDING", ""]:
         return False, None
 
     clean_utr = new_utr.strip().upper()
-    ensure_xlsx_exists()
 
+    # 1. Check Supabase permanent cloud database first
+    try:
+        encoded_utr = urllib.parse.quote(clean_utr)
+        rows = supabase_request(f"applications?upi_reference=eq.{encoded_utr}&select=*", method="GET")
+        if rows and len(rows) > 0:
+            r = rows[0]
+            match_info = {
+                "applicantId": r.get("applicant_id", ""),
+                "name": r.get("full_name", ""),
+                "timestamp": r.get("created_at", "")
+            }
+            return True, match_info
+    except Exception as ex:
+        print(f"[!] Supabase duplicate UTR check note: {ex}")
+
+    # 2. Check local applications.xlsx fallback
+    ensure_xlsx_exists()
     try:
         wb = openpyxl.load_workbook(XLSX_FILENAME, data_only=True)
         ws = wb.active
@@ -667,40 +832,38 @@ class GetKnowledgeRequestHandler(SimpleHTTPRequestHandler):
                 })
                 return
 
-            # 1. Compare UPI reference number with existing entries in applications.xlsx
+            # 1. Compare UPI reference number with existing entries in Supabase and applications.xlsx
             is_duplicate, match_info = check_duplicate_utr(new_utr)
             if is_duplicate:
-                print(f"[!] Duplicate UPI Reference detected: {new_utr} (Row {match_info.get('row')})")
+                print(f"[!] Duplicate UPI Reference detected: {new_utr}")
                 self.send_json_response(409, {
                     "status": "duplicate",
                     "message": f"This UPI Reference Number ({new_utr}) has already been registered in our records for applicant {match_info.get('applicantId')}. If you believe this is an error, please contact our admissions team at {OFFICIAL_EMAIL} or WhatsApp {OFFICIAL_PHONE}."
                 })
                 return
 
-            # 2. If nothing matches, append row to applications.xlsx
+            # 2. Permanent insert into Supabase Cloud Database!
+            supa_res = supabase_insert_application(data)
+            if supa_res is not None:
+                print(f"[+] Saved application {data.get('applicantId')} to Supabase Cloud Database")
+
+            # 3. Append row to local applications.xlsx
             try:
                 append_to_xlsx(data)
             except Exception as e:
                 print(f"[!] Error writing to local XLSX: {e}")
 
-            # 3. Synchronize with Google Sheet (which also dispatches confirmation email!)
-            sheet_res = call_google_sheet_api("apply", data)
-            if sheet_res and sheet_res.get("status") == "duplicate":
-                self.send_json_response(409, {
-                    "status": "duplicate",
-                    "message": sheet_res.get("message")
-                })
-                return
+            # 4. Optional Google Sheet sync (if configured)
+            call_google_sheet_api("apply", data)
 
-            # 4. If Google Sheet did not handle email dispatch, run background email thread
-            if not sheet_res or sheet_res.get("status") != "success":
-                try:
-                    email_thread = threading.Thread(target=send_confirmation_email, args=(dict(data),), daemon=True)
-                    email_thread.start()
-                except Exception as e:
-                    print(f"[!] Email thread start failed: {e}")
+            # 5. Dispatch confirmation email (runs as background thread)
+            try:
+                email_thread = threading.Thread(target=send_confirmation_email, args=(dict(data),), daemon=True)
+                email_thread.start()
+            except Exception as e:
+                print(f"[!] Email thread start failed: {e}")
 
-            # 5. Return success response immediately
+            # 6. Return success response immediately
             self.send_json_response(200, {
                 "status": "success",
                 "message": "Application recorded successfully!",
@@ -727,15 +890,18 @@ class GetKnowledgeRequestHandler(SimpleHTTPRequestHandler):
 
             fields = data.get("fields", data)
 
-            # 1. Update in Google Sheet
-            sheet_res = call_google_sheet_api("update", {"applicantId": applicant_id, "fields": fields})
+            # 1. Update in Supabase Cloud Database
+            supa_res = supabase_update_application(applicant_id, fields)
 
-            # 2. Update in local applications.xlsx
+            # 2. Update in Google Sheet if configured
+            call_google_sheet_api("update", {"applicantId": applicant_id, "fields": fields})
+
+            # 3. Update in local applications.xlsx
             success, msg = update_xlsx_row(applicant_id, fields)
-            code = 200 if (success or (sheet_res and sheet_res.get("status") == "success")) else 404
+            code = 200 if (supa_res is not None or success) else 404
             self.send_json_response(code, {
                 "status": "success" if code == 200 else "error",
-                "message": (sheet_res and sheet_res.get("message")) or msg
+                "message": f"Applicant '{applicant_id}' updated successfully." if code == 200 else msg
             })
             return
 
@@ -756,16 +922,19 @@ class GetKnowledgeRequestHandler(SimpleHTTPRequestHandler):
                 self.send_json_response(400, {"status": "error", "message": "Applicant ID is required."})
                 return
 
-            # 1. Permanently delete from Google Sheet!
-            sheet_res = call_google_sheet_api("delete", {"applicantId": applicant_id})
+            # 1. Permanently delete from Supabase Cloud Database!
+            supa_res = supabase_delete_application(applicant_id)
 
-            # 2. Delete from local applications.xlsx
+            # 2. Delete from Google Sheet if configured
+            call_google_sheet_api("delete", {"applicantId": applicant_id})
+
+            # 3. Delete from local applications.xlsx
             success, msg = delete_xlsx_row(applicant_id)
 
-            if (sheet_res and sheet_res.get("status") == "success") or success:
+            if supa_res is not None or success:
                 self.send_json_response(200, {
                     "status": "success",
-                    "message": f"Applicant '{applicant_id}' permanently deleted from Google Sheet and Excel."
+                    "message": f"Applicant '{applicant_id}' permanently deleted from Supabase database and Excel."
                 })
             else:
                 self.send_json_response(404, {"status": "error", "message": f"Applicant ID '{applicant_id}' not found."})
@@ -787,15 +956,18 @@ class GetKnowledgeRequestHandler(SimpleHTTPRequestHandler):
                 import random
                 data["applicantId"] = f"GK{random.randint(100000, 999999)}"
 
-            # 1. Add to Google Sheet
+            # 1. Add to Supabase Cloud Database
+            supa_res = supabase_insert_application(data)
+
+            # 2. Add to Google Sheet if configured
             call_google_sheet_api("add", data)
 
-            # 2. Add to local applications.xlsx
+            # 3. Add to local applications.xlsx
             try:
                 append_to_xlsx(data)
                 self.send_json_response(200, {
                     "status": "success",
-                    "message": f"Added applicant {data['applicantId']} to Google Sheet and applications.xlsx",
+                    "message": f"Added applicant {data['applicantId']} to Supabase and applications.xlsx",
                     "applicantId": data["applicantId"]
                 })
             except Exception as e:
@@ -823,16 +995,16 @@ class GetKnowledgeRequestHandler(SimpleHTTPRequestHandler):
                 return
 
             saved_path = save_base64_screenshot(applicant_id, filename, b64_data)
-            success, msg = update_xlsx_row(applicant_id, {"screenshotFileName": saved_path})
-            if success:
-                self.send_json_response(200, {
-                    "status": "success",
-                    "message": f"Screenshot uploaded and saved for {applicant_id}!",
-                    "screenshotFile": saved_path,
-                    "url": "/" + saved_path
-                })
-            else:
-                self.send_json_response(404, {"status": "error", "message": msg})
+            # Update in Supabase Cloud Database
+            supabase_update_application(applicant_id, {"screenshotFileName": saved_path})
+            # Update in local applications.xlsx
+            update_xlsx_row(applicant_id, {"screenshotFileName": saved_path})
+            self.send_json_response(200, {
+                "status": "success",
+                "message": f"Screenshot uploaded and saved for {applicant_id}!",
+                "screenshotFile": saved_path,
+                "url": "/" + saved_path
+            })
             return
 
         # Default fallback for other POST requests
@@ -857,19 +1029,29 @@ class GetKnowledgeRequestHandler(SimpleHTTPRequestHandler):
                 self.wfile.write(b"Unauthorized: Admin password required.")
                 return
 
-            # Sync latest rows from Google Sheet if connected
-            sheet_res = call_google_sheet_api("getAll")
-            if sheet_res and isinstance(sheet_res, dict) and "applications" in sheet_res:
-                sheet_apps = sheet_res.get("applications", [])
-                sheet_headers = sheet_res.get("headers", [
-                    "Timestamp", "Applicant ID", "Full Name", "Phone Number", "WhatsApp Number",
-                    "Email Address", "Course", "Fee (INR)", "Batch Timing", "Payment Status",
-                    "UPI Reference / UTR", "Screenshot File", "Verification Status"
-                ])
+            default_headers = [
+                "Timestamp", "Applicant ID", "Full Name", "Phone Number", "WhatsApp Number",
+                "Email Address", "Course", "Fee (INR)", "Batch Timing", "Payment Status",
+                "UPI Reference / UTR", "Screenshot File", "Verification Status"
+            ]
+
+            # 1. Sync latest rows from Supabase Cloud Database!
+            supa_apps = supabase_get_all_applications()
+            if supa_apps is not None:
                 try:
-                    sync_sheet_to_xlsx(sheet_headers, sheet_apps)
+                    sync_sheet_to_xlsx(default_headers, supa_apps)
                 except Exception as ex:
-                    print(f"[!] Sync sheet before download note: {ex}")
+                    print(f"[!] Sync Supabase before download note: {ex}")
+            else:
+                # 2. Sync latest rows from Google Sheet if connected
+                sheet_res = call_google_sheet_api("getAll")
+                if sheet_res and isinstance(sheet_res, dict) and "applications" in sheet_res:
+                    sheet_apps = sheet_res.get("applications", [])
+                    sheet_headers = sheet_res.get("headers", default_headers)
+                    try:
+                        sync_sheet_to_xlsx(sheet_headers, sheet_apps)
+                    except Exception as ex:
+                        print(f"[!] Sync sheet before download note: {ex}")
 
             if not os.path.exists(XLSX_FILENAME):
                 ensure_xlsx_exists()
@@ -892,15 +1074,32 @@ class GetKnowledgeRequestHandler(SimpleHTTPRequestHandler):
                 self.send_json_response(401, {"status": "unauthorized", "message": "Admin authorization required."})
                 return
 
-            # 1. Try to fetch live applications directly from Google Sheet!
+            default_headers = [
+                "Timestamp", "Applicant ID", "Full Name", "Phone Number", "WhatsApp Number",
+                "Email Address", "Course", "Fee (INR)", "Batch Timing", "Payment Status",
+                "UPI Reference / UTR", "Screenshot File", "Verification Status"
+            ]
+
+            # 1. Try to fetch live applications directly from Supabase Cloud Database!
+            supa_apps = supabase_get_all_applications()
+            if supa_apps is not None:
+                try:
+                    sync_sheet_to_xlsx(default_headers, supa_apps)
+                except Exception as ex:
+                    print(f"[!] Sync Supabase to xlsx note: {ex}")
+                self.send_json_response(200, {
+                    "count": len(supa_apps),
+                    "headers": default_headers,
+                    "applications": supa_apps,
+                    "source": "supabase"
+                })
+                return
+
+            # 2. Try to fetch live applications directly from Google Sheet if connected
             sheet_res = call_google_sheet_api("getAll")
             if sheet_res and isinstance(sheet_res, dict) and "applications" in sheet_res:
                 sheet_apps = sheet_res.get("applications", [])
-                sheet_headers = sheet_res.get("headers", [
-                    "Timestamp", "Applicant ID", "Full Name", "Phone Number", "WhatsApp Number",
-                    "Email Address", "Course", "Fee (INR)", "Batch Timing", "Payment Status",
-                    "UPI Reference / UTR", "Screenshot File", "Verification Status"
-                ])
+                sheet_headers = sheet_res.get("headers", default_headers)
                 try:
                     sync_sheet_to_xlsx(sheet_headers, sheet_apps)
                 except Exception as ex:
@@ -913,14 +1112,14 @@ class GetKnowledgeRequestHandler(SimpleHTTPRequestHandler):
                 })
                 return
 
-            # 2. Fallback to local applications.xlsx if Google Sheet is not configured or offline
+            # 3. Fallback to local applications.xlsx if Supabase/Google Sheet are offline
             ensure_xlsx_exists()
             try:
                 wb = openpyxl.load_workbook(XLSX_FILENAME, data_only=True)
                 ws = wb.active
                 rows = list(ws.iter_rows(values_only=True))
                 if len(rows) <= 1:
-                    self.send_json_response(200, {"count": 0, "headers": [], "applications": [], "source": "local_xlsx"})
+                    self.send_json_response(200, {"count": 0, "headers": default_headers, "applications": [], "source": "local_xlsx"})
                     return
                 headers = [str(h) for h in rows[0]]
                 apps = []
